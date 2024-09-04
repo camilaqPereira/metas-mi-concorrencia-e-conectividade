@@ -14,6 +14,8 @@ class ClientSocket():
         self.addr = (self.ip, self.port)
         self.client_socket.connect(self.addr)
 
+    def end(self):
+        self.client_socket.close()
 
 
 
