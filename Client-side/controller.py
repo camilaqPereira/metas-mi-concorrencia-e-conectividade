@@ -20,12 +20,12 @@ def send_request(request):
         server_response = client.client_socket.recv(int(size_transfer.decode('utf-8')))
 
         if int(size_transfer.decode('utf-8')) == -1:
-            response = {'status': 0, 'raise':'data not found'}
+            response = {'status': 0, 'raise':0}
         else:
             response = {'status': 1, 'data': server_response}
 
     except socket.error as e:
-        response = {'status': 0, 'raise':str(e)}
+        response = {'status': 0, 'raise':1, 'execpt':str(e)}
 
     client.end()
     return response
