@@ -1,6 +1,5 @@
 import socket
 import threading
-import time
 
 HEADER = 64
 HOST = socket.gethostbyname(socket.gethostname())
