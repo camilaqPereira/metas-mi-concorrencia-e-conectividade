@@ -1,38 +1,39 @@
 from Client import controller
-from Client.controller import create_account, conect, client
+from Client.ClientSockClass import ClientSocket
 
-ip = '127.0.0.1'
+ip = input("Digite o IP da maquina: ")
 
-client_token = ''
+client = ClientSocket()
+client.ip = ip
 
 opc = int(input("1 pra criar conta e 2 para logar: "))
 email = input("Informe seu email: ")
 if opc == 1:
-    response = create_account(email, ip)
+    (status, response) = controller.create_account(email, client)
 
-    if response['status']:
-        print(f'ID do usuario: {response['data']}')
-        client_token = response['data']
+    if status:
+        print(f'ID do usuario: {response}')
+        client.token = response
     else:
-        print('falha ao criar usuario')
+        print(response)
 
 if opc == 2:
-    response = conect(ip, email)
+    (status, response) = controller.connect(email, client)
 
-    if response['status']:
+    if status:
         print('login realizado com sucesso')
-        client_token = response['data']
+        client.token = response
     else:
-        print('erro ao loggar')
+        print(response)
 
 inicio = input("informe a sua origem: ")
 destino = input("informe seu destino: ")
 
-routes = controller.search_routes(match=inicio, destination=destino, client_id=client_token)
+(status, routes) = controller.search_routes(match=inicio, destination=destino, client=client)
 
-if routes['status']:
+if status:
     i = 1
-    for route in routes['data']:
+    for route in routes:
         print(f"opcao {i}: trechos: ")
 
         for fligth in route:
@@ -42,18 +43,14 @@ if routes['status']:
 
     opc = int(input("digite o numero da rota desejada: "))
 
-    response = controller.buying(routes['data'][opc], client_id=client_token)
+    (status, response) = controller.buying(routes=routes[opc], client=client)
 
-    if response['status']:
-        if response['status']['success']:
-            print("compra bem sucedida")
-        else:
-            print("compra nao realizada")
-
-elif routes['status'] == 0 and routes['raise']  == 0:
-    print("dados para a rota nao encontrados")
+    if status:
+        print(f"compra aprovada, id: {response}")
+    else:
+        print(response)
 
 else:
-    print("houve uma excecao")
+    print(routes)
 
 

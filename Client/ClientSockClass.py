@@ -1,7 +1,5 @@
 import socket
 
-
-
 class ClientSocket:
     __CONNECT_MSG = '!OK'
     __ENCOD_FORMAT = 'utf-8'
@@ -11,6 +9,7 @@ class ClientSocket:
         self.ip = ""
         self.port = 8000
         self.client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.token = None
 
     def connect(self, ip):
         self.ip = ip

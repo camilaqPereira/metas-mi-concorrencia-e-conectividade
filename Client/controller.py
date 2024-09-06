@@ -1,24 +1,18 @@
-import socket
-import pickle
+
 import sys
-from array import ArrayType
-
-from flask import request
-
 from RequestsClass import *
-from Server.RouteClass import *
 from ClientSockClass import *
 
-IP = ""
+CURRENT_IP = ""
 MAX_SIZE_TRANSFER = 64
 ENCOD = 'utf-8'
+FAIL_CONNEXION = "erro de conexao"
 
-client = ClientSocket()
 
 
-def send_request(request):
+def send_request(request, client:ClientSocket):
 
-    if client.connect(IP):
+    if client.connect(CURRENT_IP):
         size_transfer = str(sys.getsizeof(request))
         size_transfer += ' ' * (MAX_SIZE_TRANSFER - sys.getsizeof(request))
 
@@ -42,42 +36,69 @@ def send_request(request):
     return response
 
 
-def buying(routes, client_id):
-    request = BuyRequest(client_token=client_id)
+def buying(routes, client:ClientSocket):
+    buy_request = BuyRequest(client_token=client.token)
     for route in routes:
-        request.route.append(route.id)
+        buy_request.route.append(route.id)
 
-    response = send_request(request)
-
-    return response
-
-
-def conect(ip, email):
-    IP = ip
-    request = AccountCheck(email)
-    response = send_request(request)
-
-    return response
-
-
-def search_routes(match, destination, client_id):
-    request = RouteRequest(match=match, destination=destination, client_token=client_id)
-    response = send_request(request)
-
-    return response
-
-def create_account(email, ip):
-    request = AccountCreate(email)
-    response = send_request(request)
+    response = send_request(buy_request, client)
 
     if response['status']:
-        client_id = response['data']
-        conect(ip, email)
-    return response
+        if response['data']['status']:
+            return 1, response['data']['id']
+    elif response['status'] == 0 and response['raise'] == 0:
+        return 0, "negada"
+    else:
+        return 0, FAIL_CONNEXION
 
-def search_bougths(client_token):
-    request = BoughtRequest(client_token)
+def connect(email, client:ClientSocket):
+    connect_request = AccountCheck(email)
+    response = send_request(connect_request, client)
 
-    response = send_request(request)
+    if response['status']:
+        return 1, response['data']['user_id']
+    else:
+        if response['raise'] == 0:
+            return 0, "id nao localizado"
+        else:
+            return 0, FAIL_CONNEXION
+
+
+def search_routes(match, destination, client:ClientSocket):
+    route_request = RouteRequest(match=match, destination=destination, client_token=client.token)
+    response = send_request(route_request, client)
+
+    if response['status']:
+        return 1, response['data']
+    elif response['raise'] == 0:
+        return 0, "nenhuma rota encontrada"
+    else:
+        return 0, FAIL_CONNEXION
+
+
+def create_account(email, client:ClientSocket):
+    create_account_request = AccountCreate(email)
+    response = send_request(create_account_request, client)
+
+    if response['status']:
+        client_id = response['data']['user_id']
+        connect(email, client)
+        return 1, response['data']['user_id']
+    elif response['raise'] == 0:
+        return 0, "email ja cadastrado"
+    else:
+        return 0, FAIL_CONNEXION
+
+def search_bougths(client:ClientSocket):
+    bougths_request = BoughtRequest(client.token)
+
+    response = send_request(bougths_request, client)
+
+    if response['status']:
+        return 1, response['data']
+    elif response['raise'] == 0:
+        return 0, "nenhuma compra encontrada"
+    else:
+        return 0, FAIL_CONNEXION
 
     return response
