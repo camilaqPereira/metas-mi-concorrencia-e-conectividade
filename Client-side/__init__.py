@@ -37,13 +37,13 @@ if status:
         print(f"opcao {i}: trechos: ")
 
         for fligth in route:
-            print(f'{fligth.match} a {fligth.destination}')
+            print(f'\t => {fligth.match} a {fligth.destination}')
 
         i += 1
 
-    opc = int(input("digite o numero da rota desejada: "))
+    opc = int(input("\n\ndigite o numero da rota desejada: "))
 
-    (status, response) = controller.buying(routes=routes[opc], client=client)
+    (status, response) = controller.buying(routes=routes[opc - 1], client=client)
 
     if status:
         print(f"compra aprovada, id: {response}")
@@ -52,5 +52,6 @@ if status:
 
 else:
     print(routes)
+
 
 
