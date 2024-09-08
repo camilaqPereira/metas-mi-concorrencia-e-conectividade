@@ -1,36 +1,57 @@
-import socket
-from re import match
+from Client import controller
+from Client.ClientSockClass import ClientSocket
 
-import controller
+ip = input("Digite o IP da maquina: ")
 
-ip = '127.0.0.1'
+client = ClientSocket()
+client.ip = ip
 
-controller.conect(ip)
+opc = int(input("1 pra criar conta e 2 para logar: "))
+email = input("Informe seu email: ")
+if opc == 1:
+    (status, response) = controller.create_account(email, client)
+
+    if status:
+        print(f'ID do usuario: {response}')
+        client.token = response
+    else:
+        print(response)
+
+if opc == 2:
+    (status, response) = controller.connect(email, client)
+
+    if status:
+        print('login realizado com sucesso')
+        client.token = response
+    else:
+        print(response)
 
 inicio = input("informe a sua origem: ")
 destino = input("informe seu destino: ")
 
-routes = controller.search_routes(match=inicio, destination=destino)
+(status, routes) = controller.search_routes(match=inicio, destination=destino, client=client)
 
-if routes['status']:
-    i = 0
-    for rota in routes['data'].keys():
-        print(f"opcao {i}: {rota}")
+if status:
+    i = 1
+    for route in routes:
+        print(f"opcao {i}: trechos: ")
 
-    opc = input("digite o numero da rota desejada: ")
+        for fligth in route:
+            print(f'\t => {fligth.match} a {fligth.destination}')
 
-    response = controller.buying(opc)
+        i += 1
 
-    if response['status']:
-        if response['status']['success']:
-            print("compra bem sucedida")
-        else:
-            print("compra nao realizada")
+    opc = int(input("\n\ndigite o numero da rota desejada: "))
 
-elif routes['status'] == 0 and routes['raise']  == 0:
-    print("dados para a rota nao encontrados")
+    (status, response) = controller.buying(routes=routes[opc - 1], client=client)
+
+    if status:
+        print(f"compra aprovada, id: {response}")
+    else:
+        print(response)
 
 else:
-    print("houve uma excecao")
+    print(routes)
+
 
 
