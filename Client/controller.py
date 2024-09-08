@@ -7,7 +7,7 @@ CURRENT_IP = ""
 MAX_SIZE_TRANSFER = 64
 ENCOD = 'utf-8'
 FAIL_CONNEXION = "erro de conexao"
-
+TOKEN_NOT_DEFINED = "Usuario nao conectado"
 
 
 def send_request(request, client:ClientSocket):
@@ -37,11 +37,15 @@ def send_request(request, client:ClientSocket):
 
 
 def buying(routes, client:ClientSocket):
-    buy_request = BuyRequest(client_token=client.token)
-    for route in routes:
-        buy_request.route.append(route.id)
+    if client.token == '':
+        return  0, TOKEN_NOT_DEFINED
 
-    response = send_request(buy_request, client)
+    buy_request = ClientRequest(client_token=client.token, rq_data=[], rq_type="buy")
+
+    for route in routes:
+        buy_request.rq_data.append(route.id)
+
+    response = send_request(buy_request.to_json(), client)
 
     if response['status']:
         if response['data']['status']:
@@ -52,8 +56,8 @@ def buying(routes, client:ClientSocket):
         return 0, FAIL_CONNEXION
 
 def connect(email, client:ClientSocket):
-    connect_request = AccountCheck(email)
-    response = send_request(connect_request, client)
+    connect_request = ClientRequest(rq_data={'email':email}, rq_type='account_check')
+    response = send_request(connect_request.to_json(), client)
 
     if response['status']:
         return 1, response['data']['user_id']
@@ -65,8 +69,8 @@ def connect(email, client:ClientSocket):
 
 
 def search_routes(match, destination, client:ClientSocket):
-    route_request = RouteRequest(match=match, destination=destination, client_token=client.token)
-    response = send_request(route_request, client)
+    route_request = ClientRequest(client_token=client.token, rq_type='get_routes', rq_data={'match':match, 'destination':destination})
+    response = send_request(route_request.to_json(), client)
 
     if response['status']:
         return 1, response['data']
@@ -77,8 +81,8 @@ def search_routes(match, destination, client:ClientSocket):
 
 
 def create_account(email, client:ClientSocket):
-    create_account_request = AccountCreate(email)
-    response = send_request(create_account_request, client)
+    create_account_request = ClientRequest(rq_type='create_account', rq_data={'email':email})
+    response = send_request(create_account_request.to_json(), client)
 
     if response['status']:
         client_id = response['data']['user_id']
@@ -90,9 +94,12 @@ def create_account(email, client:ClientSocket):
         return 0, FAIL_CONNEXION
 
 def search_bougths(client:ClientSocket):
-    bougths_request = BoughtRequest(client.token)
+    if client.token == '':
+        return  0, TOKEN_NOT_DEFINED
 
-    response = send_request(bougths_request, client)
+    bougths_request = ClientRequest(client_token=client.token,rq_data=[], rq_type='bougths')
+
+    response = send_request(bougths_request.to_json(), client)
 
     if response['status']:
         return 1, response['data']
@@ -100,5 +107,3 @@ def search_bougths(client:ClientSocket):
         return 0, "nenhuma compra encontrada"
     else:
         return 0, FAIL_CONNEXION
-
-    return response
