@@ -2,7 +2,7 @@ from hashlib import sha256
 from utils import *
 import socket
 
-class ClientHandler():
+class ClientHandler:
 
     def __init__(self, conn, addr):  
         self.conn = conn
