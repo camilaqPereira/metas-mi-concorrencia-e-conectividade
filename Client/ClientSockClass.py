@@ -9,7 +9,7 @@ class ClientSocket:
         self.ip = ""
         self.port = 8000
         self.client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.token = None
+        self.token = ''
 
     def connect(self, ip):
         self.ip = ip
