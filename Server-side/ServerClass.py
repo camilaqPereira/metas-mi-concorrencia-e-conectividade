@@ -2,7 +2,7 @@ from ClientHandlerClass import ClientHandler
 from utils import HOST
 import socket
 
-class Server():
+class Server:
     _instance = None
     backlog_clients = {}
 
