@@ -1,4 +1,6 @@
 from hashlib import sha256
+
+from Server.ResponseClass import Response
 from Server.utils import *
 from Client.RequestsClass import Request
 import socket
@@ -26,13 +28,13 @@ class ClientHandler:
 
         return pkt
 
-    def send_pkt(self, pkt):
+    def send_pkt(self, pkt: Response):
         status = False
         try:
-            pkt_len = str(len(pkt)).encode(FORMAT)
+            pkt_len = str(len(pkt.to_json())).encode(FORMAT)
             pkt_len += b' ' * (MAX_PKT_SIZE - len(pkt_len))
             self.conn.send(pkt_len)
-            self.conn.send(pkt.encode(FORMAT))
+            self.conn.send(pkt.to_json().encode(FORMAT))
             status = True
         except socket.error as err:
             print(f"Package transfer failed! {str(err)}\n")
