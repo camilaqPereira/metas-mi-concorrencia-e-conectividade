@@ -1,6 +1,7 @@
 import sys
 from Client.RequestsClass import *
 from Client.ClientSockClass import *
+from Server.ResponseClass import Response
 
 
 MAX_SIZE_TRANSFER = 64
@@ -19,12 +20,13 @@ def send_request(request, client:ClientSocket):
             client.client_socket.send(size_transfer)
             client.client_socket.send(request.encode(ENCOD))
             size_transfer = client.client_socket.recv(MAX_SIZE_TRANSFER)
-            server_response = client.client_socket.recv(int(size_transfer.decode(ENCOD)))
 
-            if int(size_transfer.decode(ENCOD)) == -1:
+            server_response: Response = Response().from_json(client.client_socket.recv(int(size_transfer.decode(ENCOD))))
+
+            if server_response.status == 0:
                 response = {'status': 0, 'raise': 0}
             else:
-                response = {'status': 1, 'data': server_response}
+                response = {'status': 1, 'data': server_response.data, 'ts':server_response.timestamp}
 
         except socket.error as e:
             response = {'status': 0, 'raise':1, 'execpt':str(e)}
@@ -39,7 +41,7 @@ def buying(routes, client:ClientSocket):
     if client.token == '':
         return  0, TOKEN_NOT_DEFINED
 
-    buy_request = ClientRequest(client_token=client.token, rq_data=[], rq_type="buy")
+    buy_request = Request(client_token=client.token, rq_data=[], rq_type="buy")
 
     for route in routes:
         buy_request.rq_data.append(route.id)
@@ -55,7 +57,7 @@ def buying(routes, client:ClientSocket):
         return 0, FAIL_CONNEXION
 
 def connect(email, client:ClientSocket):
-    connect_request = ClientRequest(rq_data={'email':email}, rq_type='account_check')
+    connect_request = Request(rq_data={'email':email}, rq_type='account_check')
     response = send_request(connect_request.to_json(), client)
 
     if response['status']:
@@ -68,7 +70,7 @@ def connect(email, client:ClientSocket):
 
 
 def search_routes(match, destination, client:ClientSocket):
-    route_request = ClientRequest(client_token=client.token, rq_type='get_routes', rq_data={'match':match, 'destination':destination})
+    route_request = Request(client_token=client.token, rq_type='get_routes', rq_data={'match':match, 'destination':destination})
     response = send_request(route_request.to_json(), client)
 
     if response['status']:
@@ -80,7 +82,7 @@ def search_routes(match, destination, client:ClientSocket):
 
 
 def create_account(email, client:ClientSocket):
-    create_account_request = ClientRequest(rq_type='create_account', rq_data={'email':email})
+    create_account_request = Request(rq_type='create_account', rq_data={'email':email})
     response = send_request(create_account_request.to_json(), client)
 
     if response['status']:
@@ -96,7 +98,7 @@ def search_bougths(client:ClientSocket):
     if client.token == '':
         return  0, TOKEN_NOT_DEFINED
 
-    bougths_request = ClientRequest(client_token=client.token,rq_data=[], rq_type='bougths')
+    bougths_request = Request(client_token=client.token, rq_data=[], rq_type='bougths')
 
     response = send_request(bougths_request.to_json(), client)
 
