@@ -1,9 +1,8 @@
-
 import sys
-from RequestsClass import *
-from ClientSockClass import *
+from Client.RequestsClass import *
+from Client.ClientSockClass import *
 
-CURRENT_IP = ""
+
 MAX_SIZE_TRANSFER = 64
 ENCOD = 'utf-8'
 FAIL_CONNEXION = "erro de conexao"
@@ -12,14 +11,14 @@ TOKEN_NOT_DEFINED = "Usuario nao conectado"
 
 def send_request(request, client:ClientSocket):
 
-    if client.connect(CURRENT_IP):
-        size_transfer = str(sys.getsizeof(request))
-        size_transfer += ' ' * (MAX_SIZE_TRANSFER - sys.getsizeof(request))
+    if client.connect():
+        size_transfer = str(len(request)).encode(ENCOD)
+        size_transfer += b' ' * (MAX_SIZE_TRANSFER - len(size_transfer))
 
         try:
-            client.client_socket.send(size_transfer.encode(ENCOD))
-            client.client_socket.send(request)
-            size_transfer = client.client_socket.recv(1024)
+            client.client_socket.send(size_transfer)
+            client.client_socket.send(request.encode(ENCOD))
+            size_transfer = client.client_socket.recv(MAX_SIZE_TRANSFER)
             server_response = client.client_socket.recv(int(size_transfer.decode(ENCOD)))
 
             if int(size_transfer.decode(ENCOD)) == -1:

@@ -3,8 +3,7 @@ from Client.ClientSockClass import ClientSocket
 
 ip = input("Digite o IP da maquina: ")
 
-client = ClientSocket()
-client.ip = ip
+client = ClientSocket(ip=ip)
 
 opc = int(input("1 pra criar conta e 2 para logar: "))
 email = input("Informe seu email: ")
