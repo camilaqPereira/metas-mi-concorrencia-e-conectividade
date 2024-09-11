@@ -1,3 +1,6 @@
+import sys
+sys.path.append('..')
+
 from Client import controller
 from Client.ClientSockClass import ClientSocket
 

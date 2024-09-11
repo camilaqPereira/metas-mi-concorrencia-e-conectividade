@@ -1,3 +1,5 @@
+import sys
+sys.path.append('..')
 from hashlib import sha256
 
 from Server.ResponseClass import Response

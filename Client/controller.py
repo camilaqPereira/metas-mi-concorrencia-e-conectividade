@@ -1,4 +1,5 @@
 import sys
+sys.path.append('..')
 from Client.RequestsClass import *
 from Client.ClientSockClass import *
 from Server.ResponseClass import Response
