@@ -1,3 +1,6 @@
+import sys
+sys.path.append('..')
+
 from Server.ServerClass import Server
 from Server.ClientHandlerClass import ClientHandler
 from threading import Thread, Lock
