@@ -1,7 +1,7 @@
-from ServerClass import Server
-from ClientHandlerClass import ClientHandler
+from Server.ServerClass import Server
+from Server.ClientHandlerClass import ClientHandler
 from threading import Thread, Lock
-from utils import DEFAULT_PORT
+from Server.utils import DEFAULT_PORT
 from socket import error
 
 backlog_lock = Lock()
