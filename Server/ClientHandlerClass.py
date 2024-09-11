@@ -1,5 +1,6 @@
 from hashlib import sha256
 from Server.utils import *
+from Client.RequestsClass import Request
 import socket
 
 class ClientHandler:
@@ -11,15 +12,15 @@ class ClientHandler:
         self.client_token = None
         
     def receive_pkt(self):
-        pkt = None
+        pkt = Request()
 
         try:
             pkt_size = self.conn.recv(MAX_PKT_SIZE).decode(FORMAT)
             if pkt_size:
                 pkt_size = int(pkt_size)
                 #recebendo segundo pacote -> mensagem
-                pkt = self.conn.recv(pkt_size).decode(FORMAT)
-                print(f"[SERVER]: Message received {self.addr} -> {pkt}")
+                pkt.from_json(self.conn.recv(pkt_size).decode(FORMAT))
+                print(f"[SERVER]: Message received {self.addr} -> {pkt.to_json()}")
         except socket.error as err:
             print(f"[SERVER] Package reception failed! {str(err)}\n")
 
