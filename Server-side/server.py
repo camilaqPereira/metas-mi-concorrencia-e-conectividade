@@ -15,9 +15,9 @@ def process_client(client):
         Server.remove_client(client)
 
 
-def main(port):
+def main(server_port):
     server = Server()
-    if not server.init_socket(port):
+    if not server.init_socket(server_port):
         exit(-1)
     
     while True:
