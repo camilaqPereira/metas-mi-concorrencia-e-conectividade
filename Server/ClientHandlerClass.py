@@ -1,5 +1,5 @@
 from hashlib import sha256
-from utils import *
+from Server.utils import *
 import socket
 
 class ClientHandler:

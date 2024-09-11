@@ -1,5 +1,5 @@
-from ClientHandlerClass import ClientHandler
-from utils import HOST
+from Server.ClientHandlerClass import ClientHandler
+from Server.utils import HOST
 import socket
 
 class Server:
