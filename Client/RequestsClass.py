@@ -1,5 +1,5 @@
 import json
-class ClientRequest:
+class Request:
     def __init__(self, rq_type: str = '', rq_data: any = None, client_token:str = ''):
         self.rq_type = rq_type
         self.rq_data = rq_data
