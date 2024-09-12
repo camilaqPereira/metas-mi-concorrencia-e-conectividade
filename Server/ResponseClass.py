@@ -9,7 +9,7 @@ class Response:
         self.rs_type = rs_type
 
     def to_json(self):
-        response = {'type':self.rs_type, 'timestamp':self.timestamp, 'status':self.status, 'data':self.data}
+        response = {'type':self.rs_type, 'timestamp':self.timestamp.strftime('%d/%m/%y %H:%M:%S'), 'status':self.status, 'data':self.data}
 
         json_str = json.dumps(response)
 
