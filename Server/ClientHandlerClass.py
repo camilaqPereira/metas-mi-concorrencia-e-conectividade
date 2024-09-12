@@ -1,5 +1,8 @@
 import sys
-sys.path.append('..')
+import os
+parent_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+sys.path.append(parent_dir)
+
 from hashlib import sha256
 
 from Server.ResponseClass import Response
@@ -12,9 +15,23 @@ class ClientHandler:
     def __init__(self, conn, addr):  
         self.conn = conn
         self.addr = addr
-        self.client_username = ""
+        self.client_username = None
         self.client_token = None
+    
+    def __update_token(self):
+        self.client_token = sha256(self.client_username.encode(FORMAT)).hexdigest()
         
+    def get_username(self, value):
+        return self.client_username
+    
+    def set_username(self, username):
+        if username:
+            self.client_username = username
+            self.__update_token()
+        
+    def get_token(self):
+        return self.client_token
+    
     def receive_pkt(self):
         pkt = Request()
 
