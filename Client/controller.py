@@ -1,5 +1,9 @@
 import sys
+
+from Server.RouteClass import Route
+
 sys.path.append('..')
+from Server.utils import *
 from Client.RequestsClass import *
 from Client.ClientSockClass import *
 from Server.ResponseClass import Response
@@ -24,17 +28,15 @@ def send_request(request, client:ClientSocket):
 
             server_response: Response = Response().from_json(client.client_socket.recv(int(size_transfer.decode(ENCOD))))
 
-            if server_response.status == 0:
-                response = {'status': 0, 'raise': 0}
-            else:
-                response = {'status': 1, 'data': server_response.data, 'ts':server_response.timestamp}
+
+            response = server_response
 
         except socket.error as e:
-            response = {'status': 0, 'raise':1, 'execpt':str(e)}
+            response = Response(data={'execpt':str(e)}, rs_type=NETWORK_FAIL, status=NETWORK_ERROR)
 
         client.end()
     else:
-        response = {'status': 0, 'raise': 2}
+        response = Response()
     return response
 
 
@@ -42,70 +44,43 @@ def buying(routes, client:ClientSocket):
     if client.token == '':
         return  0, TOKEN_NOT_DEFINED
 
-    buy_request = Request(client_token=client.token, rq_data=[], rq_type="buy")
+    buy_request = Request(client_token=client.token, rq_data=[], rq_type=METHOD_BUY)
 
-    for route in routes:
-        buy_request.rq_data.append(route.id)
+    for fligth in routes:
+        for route in fligth:
+            path = Route().from_string(route)
+            buy_request.rq_data.append(path.id)
 
     response = send_request(buy_request.to_json(), client)
 
-    if response['status']:
-        if response['data']['status']:
-            return 1, response['data']['id']
-    elif response['status'] == 0 and response['raise'] == 0:
-        return 0, "negada"
-    else:
-        return 0, FAIL_CONNEXION
+    return response.status, response.data
 
 def connect(email, client:ClientSocket):
-    connect_request = Request(rq_data={'email':email}, rq_type='account_check')
+    connect_request = Request(rq_data={'email':email}, rq_type=METHOD_GETTOKEN)
     response = send_request(connect_request.to_json(), client)
 
-    if response['status']:
-        return 1, response['data']['user_id']
-    else:
-        if response['raise'] == 0:
-            return 0, "id nao localizado"
-        else:
-            return 0, FAIL_CONNEXION
+    return response.status, response.data
 
 
 def search_routes(match, destination, client:ClientSocket):
-    route_request = Request(client_token=client.token, rq_type='get_routes', rq_data={'match':match, 'destination':destination})
+    route_request = Request(client_token=client.token, rq_type=METHOD_GETROUTES, rq_data={'match':match, 'destination':destination})
     response = send_request(route_request.to_json(), client)
 
-    if response['status']:
-        return 1, response['data']
-    elif response['raise'] == 0:
-        return 0, "nenhuma rota encontrada"
-    else:
-        return 0, FAIL_CONNEXION
+    return response.status, response.data
 
 
 def create_account(email, client:ClientSocket):
-    create_account_request = Request(rq_type='create_account', rq_data={'email':email})
+    create_account_request = Request(rq_type=METHOD_CREATE_USER, rq_data={'email':email})
     response = send_request(create_account_request.to_json(), client)
 
-    if response['status']:
-        client_id = response['data']['user_id']
-        connect(email, client)
-        return 1, response['data']['user_id']
-    elif response['raise'] == 0:
-        return 0, "email ja cadastrado"
-    else:
-        return 0, FAIL_CONNEXION
+    return response.status, response.data
 
 def search_bougths(client:ClientSocket):
     if client.token == '':
         return  0, TOKEN_NOT_DEFINED
 
-    bougths_request = Request(client_token=client.token, rq_data=[], rq_type='bougths')
+    bougths_request = Request(client_token=client.token, rq_data=[], rq_type=METHOD_GETTICKETS)
 
     response = send_request(bougths_request.to_json(), client)
 
-    if response['status']:
-        return 1, response['data']
-    elif response['raise'] == 0:
-        return 0, "nenhuma compra encontrada"
-    else:
-        return 0, FAIL_CONNEXION
+    return response.status, response.data
