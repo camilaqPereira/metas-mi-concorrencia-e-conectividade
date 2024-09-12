@@ -20,5 +20,5 @@ class Response:
 
         self.data = response['data']
         self.rs_type = response['type']
-        self.timestamp = response['timestamp']
+        self.timestamp = datetime.datetime.strptime(response['timestamp'], '%d/%m/%y %H:%M:%S')
         self.status = response['status']
