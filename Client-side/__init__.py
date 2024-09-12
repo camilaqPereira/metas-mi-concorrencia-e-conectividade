@@ -1,8 +1,11 @@
 import sys
 sys.path.append('..')
 
+from Server import utils
 from Client import controller
 from Client.ClientSockClass import ClientSocket
+from Server.TicketClass import Ticket
+from Server.RouteClass import Route
 
 ip = input("Digite o IP da maquina: ")
 
@@ -13,7 +16,7 @@ email = input("Informe seu email: ")
 if opc == 1:
     (status, response) = controller.create_account(email, client)
 
-    if status:
+    if status == utils.OK:
         print(f'ID do usuario: {response}')
         client.token = response
     else:
@@ -22,7 +25,7 @@ if opc == 1:
 if opc == 2:
     (status, response) = controller.connect(email, client)
 
-    if status:
+    if status == utils.OK:
         print('login realizado com sucesso')
         client.token = response
     else:
@@ -33,13 +36,17 @@ destino = input("informe seu destino: ")
 
 (status, routes) = controller.search_routes(match=inicio, destination=destino, client=client)
 
-if status:
+if status == utils.OK:
     i = 1
-    for route in routes:
-        print(f"opcao {i}: trechos: ")
 
-        for fligth in route:
-            print(f'\t => {fligth.match} a {fligth.destination}')
+    for fligth in routes:
+        print(f"opcao {i}:")
+        j = 1
+
+        for route in fligth:
+            path = Route().from_string(route)
+            print(f'\t conexão {j}: {path.match} a {path.destination}')
+            j+=1
 
         i += 1
 
@@ -47,7 +54,8 @@ if status:
 
     (status, response) = controller.buying(routes=routes[opc - 1], client=client)
 
-    if status:
+    if status == utils.OK:
+        ticket = Ticket().from_json(response)
         print(f"compra aprovada, id: {response}")
     else:
         print(response)
