@@ -25,6 +25,9 @@ else:
     __CLEAR =  'cls'
 
 def buy_route(client: ClientSocket):
+    color_line = [['\033[47;30m', '\033[49;0m', '\033[49;0m'],
+                  ['\033[49;0m', '\033[47;30m', '\033[49;0m'],
+                  ['\033[49;0m', '\033[49;0m', '\033[47;30m']]
     os.system(__CLEAR)
     match = input('digite de onde voce esta saindo:')
     destination = input('digite para onde voce deseja ir: ')
@@ -114,7 +117,52 @@ def buy_route(client: ClientSocket):
             keyboard.wait('enter', True)
             menu(client=client)
 
+        elif status == utils.OPERATION_FAILED:
+            print('falha ao compra passagens, vaga indisponivel\nTente selecionar outra passagem')
+            buy_route(client=client)
+
+        else:
+            print('falha na conexao')
+            sleep(2)
+            main_loop()
+
+    elif status == utils.NOT_FOUND:
+        print('Rotas escolhidas nao existem ou nao estao disponivel')
+        menu(client)
+    elif status == utils.OPERATION_FAILED:
+        print('falha ao buscar rotas, deseja tentar novamente? ')
+        opc = 0
+        print(f'{color_line[0][opc]}\tSim\033[49;0m')
+        print(f'{color_line[0][1]}\tNao\033[49;0m')
+        key = keyboard.read_event(True)
+
+        while key.name != 'enter':
+            if key.event_type == keyboard.KEY_DOWN and key.name == 'up' and opc > 0:
+                opc -= 1
+            elif key.event_type == keyboard.KEY_DOWN and key.name == 'down' and opc < 1:
+                opc += 1
+            else:
+                pass
+
+            os.system(__CLEAR)
+            print('falha ao buscar rotas, deseja tentar novamente?')
+            print(f'{color_line[0][opc * 1]}\tSim\033[49;0m')
+            print(f'{color_line[0][1 - opc]}\tNao\033[49;0m')
+            key = keyboard.read_event(True)
+
+        if opc == 1:
+            buy_route(client=client)
+        else:
+            menu(client)
+    else:
+        print('falha na conexao')
+        main_loop()
+
+
 def seek_bougths(client: ClientSocket):
+    color_line = [['\033[47;30m', '\033[49;0m', '\033[49;0m'],
+                  ['\033[49;0m', '\033[47;30m', '\033[49;0m'],
+                  ['\033[49;0m', '\033[49;0m', '\033[47;30m']]
     os.system(__CLEAR)
     (status, data) = controller.search_bougths(client=client)
 
@@ -129,6 +177,40 @@ def seek_bougths(client: ClientSocket):
         print('pressione enter para retornar ao menu...')
         keyboard.wait('enter', True)
         menu(client=client)
+    elif status == utils.NOT_FOUND:
+        print('Nao existem comprar associadas a essa conta')
+        print('\npressione enter para retornar ao menu...')
+        keyboard.wait('enter', True)
+        menu(client=client)
+    elif status == utils.OPERATION_FAILED:
+        print('falha ao buscar compras, deseja tentar novamente? ')
+        opc = 0
+        print(f'{color_line[0][opc]}\tSim\033[49;0m')
+        print(f'{color_line[0][1]}\tNao\033[49;0m')
+        key = keyboard.read_event(True)
+
+        while key.name != 'enter':
+            if key.event_type == keyboard.KEY_DOWN and key.name == 'up' and opc > 0:
+                opc -= 1
+            elif key.event_type == keyboard.KEY_DOWN and key.name == 'down' and opc < 1:
+                opc += 1
+            else:
+                pass
+
+            os.system(__CLEAR)
+            print('falha ao buscar compras, deseja tentar novamente?')
+            print(f'{color_line[0][opc * 1]}\tSim\033[49;0m')
+            print(f'{color_line[0][1 - opc]}\tNao\033[49;0m')
+            key = keyboard.read_event(True)
+
+        if opc == 1:
+            seek_bougths(client=client)
+        else:
+            menu(client)
+    else:
+        print('falha na conexao')
+        sleep(2)
+        main_loop()
 
 def submenu_status_ok(client: ClientSocket):
     color_line = [['\033[47;30m', '\033[49;0m', '\033[49;0m'],
@@ -169,7 +251,6 @@ def submenu_status_ok(client: ClientSocket):
         seek_bougths(client)
     else:
         menu(client)
-
 def submenu_status_token(client: ClientSocket, old_opc):
     color_line = [['\033[47;30m', '\033[49;0m', '\033[49;0m'],
                   ['\033[49;0m', '\033[47;30m', '\033[49;0m'],
@@ -463,13 +544,13 @@ def menu(client: ClientSocket):
 
 
 def main_loop():
-    ip = input("Digite o IP da maquina: ")
+    ip = input("Digite o IP do servidor: ")
 
     new_client = ClientSocket(ip=ip)
 
     if new_client.connect():
         os.system(__CLEAR)
-        print('conecao estabelecida')
+        print('conexao estabelecida')
         sleep(2)
         new_client.end()
     else:
