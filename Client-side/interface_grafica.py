@@ -1,12 +1,11 @@
 
 import sys
+from os import mkdir
 from time import sleep
-
-from click import Tuple
 
 from Server.RouteClass import Route
 from Server.TicketClass import Ticket
-
+import menus
 sys.path.append('..')
 
 from Server import utils
@@ -25,9 +24,6 @@ else:
     __CLEAR =  'cls'
 
 def buy_route(client: ClientSocket):
-    color_line = [['\033[47;30m', '\033[49;0m', '\033[49;0m'],
-                  ['\033[49;0m', '\033[47;30m', '\033[49;0m'],
-                  ['\033[49;0m', '\033[49;0m', '\033[47;30m']]
     os.system(__CLEAR)
     match = input('digite de onde voce esta saindo:')
     destination = input('digite para onde voce deseja ir: ')
@@ -90,28 +86,20 @@ def buy_route(client: ClientSocket):
             print(f"dados da compra:\n\temail: {ticket.email}\n\tdata: {ticket.timestamp}\n\tde {ticket.routes[0].match} "
                   f"a {ticket.routes[len(ticket.routes)-1].destination}")
 
-            opc = 0
-            print('Deseja salvar no computador ?')
+            opc = menus.ysno_menu('deseja salvar no computador? ', __CLEAR)
 
-            os.system(__CLEAR)
-            print(f'{color_list[opc]}\tSim\033[49;0m')
-            print(f'{color_list[1]}\tNao\033[49;0m')
-            key = keyboard.read_event(True)
+            if opc == 0:
 
-            while key.name != 'enter':
-                if key.event_type == keyboard.KEY_DOWN and key.name == 'up' and opc > 0:
-                    opc -= 1
-                elif key.event_type == keyboard.KEY_DOWN and key.name == 'down' and opc < 1:
-                    opc += 1
-                else:
-                    pass
+                mkdir('\Tickets')
+                os.chdir('\Ticktes')
 
-                os.system(__CLEAR)
-                print(f'{color_list[opc*1]}\tSim\033[49;0m')
-                print(f'{color_list[1-opc]}\tNao\033[49;0m')
-                key = keyboard.read_event(True)
-            #fazer gerar o coiso de arquivo
+                with open(f'Passagem_{ticket.timestamp}.txt', 'w') as file:
+                    file.write(f"Email: {ticket.email}\n\tData: {ticket.timestamp}\n\tSaida: {ticket.routes[0].match}\n\t "
+                      f"Destino: {ticket.routes[len(ticket.routes)-1].destination}")
 
+                print('dados salvos com sucesso')
+            else:
+                pass
 
             print('pressione enter para retornar ao menu...')
             keyboard.wait('enter', True)
@@ -130,27 +118,9 @@ def buy_route(client: ClientSocket):
         print('Rotas escolhidas nao existem ou nao estao disponivel')
         menu(client)
     elif status == utils.OPERATION_FAILED:
-        print('falha ao buscar rotas, deseja tentar novamente? ')
-        opc = 0
-        print(f'{color_line[0][opc]}\tSim\033[49;0m')
-        print(f'{color_line[0][1]}\tNao\033[49;0m')
-        key = keyboard.read_event(True)
+        opc = menus.ysno_menu('falha ao buscar rotas, deseja tentar novamente?', __CLEAR)
 
-        while key.name != 'enter':
-            if key.event_type == keyboard.KEY_DOWN and key.name == 'up' and opc > 0:
-                opc -= 1
-            elif key.event_type == keyboard.KEY_DOWN and key.name == 'down' and opc < 1:
-                opc += 1
-            else:
-                pass
-
-            os.system(__CLEAR)
-            print('falha ao buscar rotas, deseja tentar novamente?')
-            print(f'{color_line[0][opc * 1]}\tSim\033[49;0m')
-            print(f'{color_line[0][1 - opc]}\tNao\033[49;0m')
-            key = keyboard.read_event(True)
-
-        if opc == 1:
+        if opc == 0:
             buy_route(client=client)
         else:
             menu(client)
@@ -160,9 +130,7 @@ def buy_route(client: ClientSocket):
 
 
 def seek_bougths(client: ClientSocket):
-    color_line = [['\033[47;30m', '\033[49;0m', '\033[49;0m'],
-                  ['\033[49;0m', '\033[47;30m', '\033[49;0m'],
-                  ['\033[49;0m', '\033[49;0m', '\033[47;30m']]
+    color_list = ['\033[47;30m', '\033[49;0m']
     os.system(__CLEAR)
     (status, data) = controller.search_bougths(client=client)
 
@@ -184,26 +152,10 @@ def seek_bougths(client: ClientSocket):
         menu(client=client)
     elif status == utils.OPERATION_FAILED:
         print('falha ao buscar compras, deseja tentar novamente? ')
-        opc = 0
-        print(f'{color_line[0][opc]}\tSim\033[49;0m')
-        print(f'{color_line[0][1]}\tNao\033[49;0m')
-        key = keyboard.read_event(True)
+        opc = menus.ysno_menu('falha ao buscar compras, deseja tentar novamente? ', __CLEAR)
 
-        while key.name != 'enter':
-            if key.event_type == keyboard.KEY_DOWN and key.name == 'up' and opc > 0:
-                opc -= 1
-            elif key.event_type == keyboard.KEY_DOWN and key.name == 'down' and opc < 1:
-                opc += 1
-            else:
-                pass
 
-            os.system(__CLEAR)
-            print('falha ao buscar compras, deseja tentar novamente?')
-            print(f'{color_line[0][opc * 1]}\tSim\033[49;0m')
-            print(f'{color_line[0][1 - opc]}\tNao\033[49;0m')
-            key = keyboard.read_event(True)
-
-        if opc == 1:
+        if opc == 0:
             seek_bougths(client=client)
         else:
             menu(client)
@@ -213,70 +165,21 @@ def seek_bougths(client: ClientSocket):
         main_loop()
 
 def submenu_status_ok(client: ClientSocket):
-    color_line = [['\033[47;30m', '\033[49;0m', '\033[49;0m'],
-                  ['\033[49;0m', '\033[47;30m', '\033[49;0m'],
-                  ['\033[49;0m', '\033[49;0m', '\033[47;30m']]
-    opc = 1
-    os.system(__CLEAR)
-    print('Selecione uma das opcoes abaixo: ')
-    print(f'{color_line[opc - 1][0]}\t1 -> Comprar Passagem \033[49;0m')
-    print(f'{color_line[opc - 1][1]}\t2 -> Consultar Compras\033[49;0m')
-    print(f'{color_line[opc - 1][2]}\t3 -> Voltar\033[49;0m')
+    opc = menus.enumerate_menu(['Comprar Passagem', 'Consultar Compras', 'Voltar'], 'selecione uma das opcoes abaixo:', __CLEAR)
 
-    key = keyboard.read_event(True)
-
-    while key.name != '1' and key.name != '2' and key.name != '3' and key.name != 'enter':
-
-        if key.event_type == keyboard.KEY_DOWN and key.name == 'up' and opc > 1:
-            opc -= 1
-        elif key.event_type == keyboard.KEY_DOWN and key.name == 'down' and opc < 3:
-            opc += 1
-        else:
-            pass
-
-        os.system(__CLEAR)
-        print('Selecione uma das opcoes abaixo: ')
-        print(f'{color_line[opc - 1][0]}\t1 -> Comprar Passagem \033[49;0m')
-        print(f'{color_line[opc - 1][1]}\t2 -> Consultar Compras\033[49;0m')
-        print(f'{color_line[opc - 1][2]}\t3 -> Voltar\033[49;0m')
-        key = keyboard.read_event(True)
-
-
-    if key.name != 'enter':
-        opc = int(key.name)
-
-    if opc == 1:
+    if opc == 0:
         buy_route(client)
-    elif opc == 2:
+    elif opc == 1:
         seek_bougths(client)
     else:
         menu(client)
 def submenu_status_token(client: ClientSocket, old_opc):
-    color_line = [['\033[47;30m', '\033[49;0m', '\033[49;0m'],
-                  ['\033[49;0m', '\033[47;30m', '\033[49;0m'],
-                  ['\033[49;0m', '\033[49;0m', '\033[47;30m']]
+    color_list = ['\033[47;30m', '\033[49;0m']
     while True:
         opc = 0
-        print('Usuario nao encontrado', end=', ')
-        if old_opc == 2:
-            print('deseja criar uma conta? ')
-            print(f'{color_line[0][opc]}\tSim\033[49;0m')
-            print(f'{color_line[0][1]}\tNao\033[49;0m')
-            key = keyboard.read_event(True)
-
-            while key.name != 'enter':
-                if key.event_type == keyboard.KEY_DOWN and key.name == 'up' and opc > 0:
-                    opc -= 1
-                elif key.event_type == keyboard.KEY_DOWN and key.name == 'down' and opc < 1:
-                    opc += 1
-                else:
-                    pass
-
-                os.system(__CLEAR)
-                print('deseja criar uma conta? ')
-                print(f'{color_line[0][opc * 1]}\tSim\033[49;0m')
-                print(f'{color_line[0][1 - opc]}\tNao\033[49;0m')
-                key = keyboard.read_event(True)
+        print('Usuario nao encontrado')
+        if old_opc == 1:
+            opc = menus.ysno_menu('deseja criar uma conta? ', __CLEAR)
 
             if opc == 0:
                 email = input('digite seu email: ')
@@ -292,25 +195,7 @@ def submenu_status_token(client: ClientSocket, old_opc):
                     pass
             else:
                 while True:
-                    os.system(__CLEAR)
-                    print('escolha uma opcao:')
-                    print(f'{color_line[0][opc]}\tTentar novamente\033[49;0m')
-                    print(f'{color_line[0][1]}\tSair\033[49;0m')
-                    key = keyboard.read_event(True)
-
-                    while key.name != 'enter':
-                        if key.event_type == keyboard.KEY_DOWN and key.name == 'up' and opc > 0:
-                            opc -= 1
-                        elif key.event_type == keyboard.KEY_DOWN and key.name == 'down' and opc < 1:
-                            opc += 1
-                        else:
-                            pass
-
-                        os.system(__CLEAR)
-                        print('escolha uma opcao:')
-                        print(f'{color_line[0][opc * 1]}\tTentar novamente\033[49;0m')
-                        print(f'{color_line[0][1 - opc]}\tSair\033[49;0m')
-                        key = keyboard.read_event(True)
+                    opc = menus.enumerate_menu(['Tentar novamente', 'Sair'], 'Escolha uma opcao:', __CLEAR)
 
                     if opc == 0:
                         email = input('digite seu email: ')
@@ -338,25 +223,7 @@ def submenu_status_token(client: ClientSocket, old_opc):
                         exit(1)
         else:
             while True:
-                os.system(__CLEAR)
-                print('escolha uma opcao:')
-                print(f'{color_line[0][opc]}\tTentar novamente\033[49;0m')
-                print(f'{color_line[0][1]}\tSair\033[49;0m')
-                key = keyboard.read_event(True)
-
-                while key.name != 'enter':
-                    if key.event_type == keyboard.KEY_DOWN and key.name == 'up' and opc > 0:
-                        opc -= 1
-                    elif key.event_type == keyboard.KEY_DOWN and key.name == 'down' and opc < 1:
-                        opc += 1
-                    else:
-                        pass
-
-                    os.system(__CLEAR)
-                    print('escolha uma opcao:')
-                    print(f'{color_line[0][opc * 1]}\tTentar novamente\033[49;0m')
-                    print(f'{color_line[0][1 - opc]}\tSair\033[49;0m')
-                    key = keyboard.read_event(True)
+                opc = menus.enumerate_menu(['Tentar novamente', 'Sair'], 'Escolha uma opcao:', __CLEAR)
 
                 if opc == 0:
                     email = input('digite seu email: ')
@@ -383,30 +250,7 @@ def submenu_status_token(client: ClientSocket, old_opc):
                 else:
                     exit(1)
 def submenu_login(client: ClientSocket):
-    color_line = [['\033[47;30m', '\033[49;0m', '\033[49;0m'],
-                  ['\033[49;0m', '\033[47;30m', '\033[49;0m'],
-                  ['\033[49;0m', '\033[49;0m', '\033[47;30m']]
-    opc = 0
-    os.system(__CLEAR)
-
-    print('escolha uma opcao:')
-    print(f'{color_line[0][opc]}\tFazer Login\033[49;0m')
-    print(f'{color_line[0][1]}\tSair\033[49;0m')
-    key = keyboard.read_event(True)
-
-    while key.name != 'enter':
-        if key.event_type == keyboard.KEY_DOWN and key.name == 'up' and opc > 0:
-            opc -= 1
-        elif key.event_type == keyboard.KEY_DOWN and key.name == 'down' and opc < 1:
-            opc += 1
-        else:
-            pass
-
-        os.system(__CLEAR)
-        print('escolha uma opcao:')
-        print(f'{color_line[0][opc * 1]}\tFazer Login\033[49;0m')
-        print(f'{color_line[0][1 - opc]}\tSair\033[49;0m')
-        key = keyboard.read_event(True)
+    opc = menus.enumerate_menu(['Fazer Login', 'Sair'], 'Selecione uma opcao:', __CLEAR)
 
     if opc == 0:
         email = input('digite seu email: ')
@@ -433,29 +277,7 @@ def submenu_login(client: ClientSocket):
     else:
         exit(1)
 def submenu_create_account(client: ClientSocket):
-    opc = 0
-    color_line = [['\033[47;30m', '\033[49;0m', '\033[49;0m'],
-                  ['\033[49;0m', '\033[47;30m', '\033[49;0m'],
-                  ['\033[49;0m', '\033[49;0m', '\033[47;30m']]
-    print('deseja criar uma conta? ')
-    print(f'{color_line[0][opc]}\tSim\033[49;0m')
-    print(f'{color_line[0][1]}\tNao\033[49;0m')
-    key = keyboard.read_event(True)
-
-    while key.name != 'enter':
-        if key.event_type == keyboard.KEY_DOWN and key.name == 'up' and opc > 0:
-            opc -= 1
-        elif key.event_type == keyboard.KEY_DOWN and key.name == 'down' and opc < 1:
-            opc += 1
-        else:
-            pass
-
-        os.system(__CLEAR)
-        print('deseja criar uma conta? ')
-        print(f'{color_line[0][opc * 1]}\tSim\033[49;0m')
-        print(f'{color_line[0][1 - opc]}\tNao\033[49;0m')
-        key = keyboard.read_event(True)
-
+    opc = menus.ysno_menu('Deseja criar uma conta?', __CLEAR)
     if opc == 0:
         email = input('digite seu email: ')
 
@@ -483,46 +305,20 @@ def submenu_create_account(client: ClientSocket):
 def menu(client: ClientSocket):
     os.system(__CLEAR)
     while True:
-        opc = 1
-        color_line = [['\033[47;30m', '\033[49;0m', '\033[49;0m'],
-                      ['\033[49;0m', '\033[47;30m', '\033[49;0m'],
-                      ['\033[49;0m', '\033[49;0m', '\033[47;30m']]
+        opc = menus.enumerate_menu(['Criar conta', 'Entrar', 'Sair'], 'Selecione uma das opcoes abaixo:', __CLEAR)
 
-        print('Selecione uma das opcoes abaixo: ')
-        print(f'{color_line[opc - 1][0]}\t1 -> Criar conta \033[49;0m')
-        print(f'{color_line[opc - 1][1]}\t2 -> Entrar\033[49;0m')
-        print(f'{color_line[opc - 1][2]}\t3 -> Sair\033[49;0m')
-        key = keyboard.read_event(True)
+        email: str = ''
 
-        while key.name != '1' and key.name != '2' and key.name != '3' and key.name != 'enter':
-
-            if key.event_type == keyboard.KEY_DOWN and key.name == 'up' and opc > 1:
-                opc -= 1
-            elif key.event_type == keyboard.KEY_DOWN and key.name == 'down' and opc < 3:
-                opc += 1
-            else:
-                pass
-
-            os.system(__CLEAR)
-            print('Selecione uma das opcoes abaixo: ')
-            print(f'{color_line[opc - 1][0]}\t1 -> Criar conta \033[49;0m')
-            print(f'{color_line[opc - 1][1]}\t2 -> Entrar\033[49;0m')
-            print(f'{color_line[opc - 1][2]}\t3 -> Sair\033[49;0m')
-            key = keyboard.read_event(True)
-
-
-        if key.name != 'enter':
-            opc = int(key.name)
-        if opc != 3:
+        if opc != 2:
             os.system(__CLEAR)
             email = input('digite seu email: ')
 
             while email.find('@') == -1 or len(email) < 5:
                 email = input('por favor informe um email valido: ')
 
-        if opc == 1:
+        if opc == 0:
             (status, data) = controller.create_account(email, client)
-        elif opc == 2:
+        elif opc == 1:
             (status, data) = controller.connect(email, client)
         else:
             exit(1)
