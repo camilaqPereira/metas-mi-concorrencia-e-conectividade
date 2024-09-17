@@ -2,7 +2,7 @@ import json
 import datetime
 
 class Response:
-    def __init__(self, timestamp = datetime.datetime.now(), status = 0, data = None, rs_type = ''):
+    def __init__(self, timestamp = datetime.datetime.now(), status = '', data = None, rs_type = ''):
         self.timestamp = timestamp
         self.status = status
         self.data = data

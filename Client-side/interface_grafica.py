@@ -3,11 +3,11 @@ import sys
 from os import mkdir
 from time import sleep
 
+sys.path.append('..')
+
 from Server.RouteClass import Route
 from Server.TicketClass import Ticket
 import menus
-sys.path.append('..')
-
 from Server import utils
 import keyboard
 from Client import controller
@@ -89,10 +89,6 @@ def buy_route(client: ClientSocket):
             opc = menus.ysno_menu('deseja salvar no computador? ', __CLEAR)
 
             if opc == 0:
-
-                mkdir('\Tickets')
-                os.chdir('\Ticktes')
-
                 with open(f'Passagem_{ticket.timestamp}.txt', 'w') as file:
                     file.write(f"Email: {ticket.email}\n\tData: {ticket.timestamp}\n\tSaida: {ticket.routes[0].match}\n\t "
                       f"Destino: {ticket.routes[len(ticket.routes)-1].destination}")
@@ -125,7 +121,7 @@ def buy_route(client: ClientSocket):
         else:
             menu(client)
     else:
-        print('falha na conexao')
+        print(f"data = {data} e status = {status}")
         main_loop()
 
 
@@ -166,7 +162,6 @@ def seek_bougths(client: ClientSocket):
 
 def submenu_status_ok(client: ClientSocket):
     opc = menus.enumerate_menu(['Comprar Passagem', 'Consultar Compras', 'Voltar'], 'selecione uma das opcoes abaixo:', __CLEAR)
-
     if opc == 0:
         buy_route(client)
     elif opc == 1:
@@ -324,6 +319,7 @@ def menu(client: ClientSocket):
             exit(1)
 
         if status == utils.OK:
+            client.token = data
             submenu_status_ok(client=client)
         elif status == utils.BAD_TOKEN:
             submenu_status_token(client, opc)
@@ -344,6 +340,7 @@ def main_loop():
 
     new_client = ClientSocket(ip=ip)
 
+    '''
     if new_client.connect():
         os.system(__CLEAR)
         print('conexao estabelecida')
@@ -353,7 +350,7 @@ def main_loop():
         os.system(__CLEAR)
         print('nao foi possivel conectar')
         exit(1)
-
+'''
     menu(new_client)
 
 main_loop()

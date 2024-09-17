@@ -35,7 +35,7 @@ def enumerate_menu(text_opc: list[str], text: str, clear_str: str):
 
         key = keyboard.read_event(True)
 
-        if key.name == 'enter':
+        if key.name == 'enter' and key.event_type == keyboard.KEY_DOWN:
             return opc
         else:
             if key.event_type == keyboard.KEY_DOWN and key.name == 'up' and opc > 0:
