@@ -18,33 +18,8 @@ backlog_lock = Lock()
 
 def process_client(client):   
     request = client.receive_pkt()
-    response = Response()
-
-    if request.rq_type == utils.METHOD_CREATE_USER:
-        response.status = utils.OK
-        response.data = "user_maike_ok"
-        response.rs_type = utils.TOKEN_TYPE
-    elif request.rq_type == utils.METHOD_GETTOKEN:
-        response.status = utils.OK
-        response.data = "user_maike_ok"
-        response.rs_type = utils.TOKEN_TYPE
-    elif request.rq_type == utils.METHOD_GETROUTES:
-        response.status = utils.OK
-        response.data = [[Route('uruguai', 'bahia', 1, 'algo')],
-                         [Route('uruguai', 'são paulo', 1, 'algo 2'), Route('são paulo', 'bahia', 1, 'algo 3')],
-                         [Route('uruguai', 'são paulo', 1, 'algo 4'), Route('são paulo', 'rio de janeiro', 1, 'algo 3'), Route('rio de janeiro', 'bahia', 1, 'algo 4')]]
-        response.rs_type = utils.ROUTE_TYPE
-
-    elif request.rq_type == utils.METHOD_BUY:
-        response.status = utils.OK
-        response.data = Ticket('abobrinha',routes=request.rq_data)
-        response.rs_type = utils.TICKET_TYPE
-    elif request.rq_type == utils.METHOD_GETTICKETS:
-        response.status = utils.OK
-        response.data = [Ticket('abobrinha', routes=Route('Uruguai', 'venezuela', 1, 'algo'))]
-        response.rs_type = utils.TICKET_TYPE
-
-    client.send_pkt(response)
+    client.send_pkt(request)
+    #TODO:clienthandler responses
     client.conn.close()
     with backlog_lock:
         Server.remove_client(client)
