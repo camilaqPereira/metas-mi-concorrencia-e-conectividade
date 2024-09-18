@@ -12,9 +12,6 @@ from DB.routes import *
 import socket
 from json import load, dump
 
-USERS_FILE_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), '/DB/users.json'))
-TICKETS_FILE_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), '/DB/tickets.json'))
-
 class ClientHandler:
 
     def __init__(self, conn:socket, addr):  
@@ -29,7 +26,7 @@ class ClientHandler:
             with open(USERS_FILE_PATH, 'r') as file:
                 users = load(file)
         except FileNotFoundError:
-            users = None
+            users = {}
         return users
     def __get_user(self, token):
         users:dict = self.__load_users()
@@ -41,8 +38,8 @@ class ClientHandler:
 
     def search_user(self, email=None):
         users:dict = self.__load_users()
-        return users.get(email)
-    
+        return users.get(email) 
+
     def validate_token(self, token = None):
         users:dict = self.__load_users()
         return True if (token in users.values()) else False
@@ -54,45 +51,62 @@ class ClientHandler:
             token = self.__create_token(email)
             users:dict = self.__load_users()
             users[email] = token
-
             with open(USERS_FILE_PATH, 'w') as file:
-                dump(users)
+                dump(users, file)
+            
             return_data = (OK, token, TOKEN_TYPE)
         else:
             return_data = (OPERATION_FAILED, None, NO_DATA_TYPE)
         return return_data
             
     def get_token(self, email:str):
-        users:dict = self.__load_users
+        users:dict = self.__load_users()
         token = users.get(email)
         return (OK, token, TOKEN_TYPE) if token else (NOT_FOUND, None, NO_DATA_TYPE)
     
-    def find_routes(self, routes_graph: Graph, match, destination):
-        found_routes = search_route(routes_graph, match, destination)
-        return (OK, found_routes, ROUTE_TYPE) if found_routes else (NOT_FOUND, None, NO_DATA_TYPE)
-    
-    def buy_routes(self, token, routes_graph:Graph, routes:list):
+    def find_routes(self, routes_graph: Graph, matches_and_destinations:list, flights:dict, match, destination):
+        if match not in matches_and_destinations or destination not in matches_and_destinations:
+            return_data = (NOT_FOUND, None, NO_DATA_TYPE)
+        else:
+            found_routes = search_route(routes_graph, matches_and_destinations, flights, match, destination)
+            return_data = (OK, found_routes, ROUTE_TYPE) if found_routes[0] else (NOT_FOUND, None, NO_DATA_TYPE)
+        return return_data
+    def buy_routes(self, token, routes_graph:Graph, matches_and_destinations:list, flights:dict, routes:list):
+        routes_keys = []
         #lock
         for item in routes: #verificando validade dos voos 
-            if not flights[item].sits:
+            flight_key = (matches_and_destinations.index(item[0]), matches_and_destinations.index(item[1]))
+            if not flights[flight_key].sits:
                 return (OPERATION_FAILED, None, NO_DATA_TYPE)
-        for item in routes:
+            routes_keys.append(flight_key)
+
+        for item in routes_keys:
             flights[item].sits -= 1
             if not flights[item]:
                 routes_graph.set_edge_weight(item[0], item[1], 9999)
                 routes_graph.sparse_matrix[item[0], item[1], 9999]
+            try:
+                with open(ROUTES_DATA_FILE_PATH, 'w') as file:
+                    serialized = {key: value.to_string() for key, value in flights}
+                    dump(serialized, file) 
+            except FileNotFoundError:
+                print("[SERVER] Could not update the graph file! File doesn't exist")  
         #unlock
         ticket = Ticket(self.__get_user(token), routes)
-        return (OK, ticket, TICKET_TYPE)
+        ticket.save()
+        return (OK, ticket.to_json(), TICKET_TYPE)
 
             
     
     def get_tickets(self, token):
-        with open(TICKETS_FILE_PATH, 'r') as file:
-            all_tickets:dict = load(file)
-        email = self.__get_user(token)
-        users_tickets = all_tickets.get(email)
-
+        try:
+            with open(TICKETS_FILE_PATH, 'r') as file:
+                all_tickets:dict = load(file)   
+            email = self.__get_user(token)
+            users_tickets = all_tickets.get(email)
+        except FileNotFoundError:
+            users_tickets = None
+    
         return (OK, users_tickets, TICKET_TYPE) if users_tickets else (NOT_FOUND, None, NO_DATA_TYPE)
 
 
