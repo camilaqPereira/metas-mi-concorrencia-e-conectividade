@@ -37,29 +37,7 @@ def buy_route(client: ClientSocket):
         i = 0
 
         opc = 0
-        print('selecione uma das rotas: ')
-        for flight in data:
-            j=1
-            color = color_list[0] if opc == i  else color_list[1]
-            print(f'\t{color}rota {i+1}:\033[49;0m')
-            for route in flight:
-                path = Route()
-                path.from_string(route)
-                print(f'\t\tconexao {j}: {path.match} a {path.destination}')
-                j+=1
-
-            i+=1
-
-        key = keyboard.read_event(True)
-
-        while key.name != 'enter':
-            if key.event_type == keyboard.KEY_DOWN and key.name == 'up' and opc > 0:
-                opc -= 1
-            elif key.event_type == keyboard.KEY_DOWN and key.name == 'down' and opc < number_routes:
-                opc += 1
-            else:
-                pass
-
+        while True:
             os.system(__CLEAR)
             i = 0
             print('selecione uma das rotas: ')
@@ -74,6 +52,17 @@ def buy_route(client: ClientSocket):
                     j += 1
 
                 i += 1
+            key = keyboard.read_event(True)
+            if key.event_type == keyboard.KEY_DOWN and key.name == 'enter':
+                break
+            elif key.event_type == keyboard.KEY_DOWN and key.name == 'up' and opc > 0:
+                opc -= 1
+            elif key.event_type == keyboard.KEY_DOWN and key.name == 'down' and opc < number_routes:
+                opc += 1
+            else:
+                pass
+
+
 
         (status, data) = controller.buying(routes=data[opc], client=client)
 
@@ -86,23 +75,13 @@ def buy_route(client: ClientSocket):
             print(f"dados da compra:\n\temail: {ticket.email}\n\tdata: {ticket.timestamp}\n\tde {ticket.routes[0].match} "
                   f"a {ticket.routes[len(ticket.routes)-1].destination}")
 
-            opc = menus.ysno_menu('deseja salvar no computador? ', __CLEAR)
-
-            if opc == 0:
-                with open(f'Passagem_{ticket.timestamp}.txt', 'w') as file:
-                    file.write(f"Email: {ticket.email}\n\tData: {ticket.timestamp}\n\tSaida: {ticket.routes[0].match}\n\t "
-                      f"Destino: {ticket.routes[len(ticket.routes)-1].destination}")
-
-                print('dados salvos com sucesso')
-            else:
-                pass
-
             print('pressione enter para retornar ao menu...')
             keyboard.wait('enter', True)
             menu(client=client)
 
         elif status == utils.OPERATION_FAILED:
             print('falha ao compra passagens, vaga indisponivel\nTente selecionar outra passagem')
+            sleep(2)
             buy_route(client=client)
 
         else:
@@ -206,9 +185,11 @@ def submenu_status_token(client: ClientSocket, old_opc):
                             pass
                         elif status == utils.NOT_FOUND:
                             print('usuario nao encontrado')
+                            sleep(2)
                             submenu_create_account(client)
                         elif status == utils.OPERATION_FAILED:
                             print('conta ja existente\nPor favor fazer login')
+                            sleep(2)
                             submenu_login(client)
                         else:
                             print('falha na conexao, por favor tente novamente mais tarde')
@@ -234,9 +215,11 @@ def submenu_status_token(client: ClientSocket, old_opc):
                         pass
                     elif status == utils.NOT_FOUND:
                         print('usuario nao encontrado')
+                        sleep(2)
                         submenu_create_account(client)
                     elif status == utils.OPERATION_FAILED:
                         print('conta ja existente\nPor favor fazer login')
+                        sleep(2)
                         submenu_login(client)
                     else:
                         print('falha na conexao, por favor tente novamente mais tarde')
@@ -261,9 +244,11 @@ def submenu_login(client: ClientSocket):
             submenu_status_token(client, 2)
         elif status == utils.NOT_FOUND:
             print('usuario nao encontrado')
+            sleep(2)
             submenu_create_account(client)
         elif status == utils.OPERATION_FAILED:
             print('conta ja existente\nPor favor fazer login')
+            sleep(2)
             submenu_login(client)
         else:
             print('falha na conexao, por favor tente novamente mais tarde')
@@ -287,9 +272,11 @@ def submenu_create_account(client: ClientSocket):
             submenu_status_token(client, 1)
         elif status == utils.NOT_FOUND:
             print('usuario nao encontrado')
+            sleep(2)
             submenu_create_account(client)
         elif status == utils.OPERATION_FAILED:
             print('conta ja existente\nPor favor fazer login')
+            sleep(2)
             submenu_login(client)
         else:
             print('falha na conexao, por favor tente novamente mais tarde')
@@ -325,10 +312,16 @@ def menu(client: ClientSocket):
             submenu_status_token(client, opc)
         elif status == utils.NOT_FOUND:
             print('Nao foi possivel encontrar uma conta')
+            sleep(2)
             submenu_create_account(client)
-        elif status == utils.OPERATION_FAILED:
+        elif status == utils.OPERATION_FAILED and opc == 0:
             print('conta ja existe\npor favor fazer login')
+            sleep(2)
             submenu_login(client)
+        elif  status == utils.OPERATION_FAILED and opc == 1:
+            print('conta nao existe\npor favor fazer criar conta')
+            sleep(2)
+            submenu_status_token(client, 1)
         else:
             print('falha na conexao, por favor tente novamente mais tarde')
             sleep(2)
@@ -340,7 +333,7 @@ def main_loop():
 
     new_client = ClientSocket(ip=ip)
 
-    '''
+
     if new_client.connect():
         os.system(__CLEAR)
         print('conexao estabelecida')
@@ -350,7 +343,7 @@ def main_loop():
         os.system(__CLEAR)
         print('nao foi possivel conectar')
         exit(1)
-'''
+
     menu(new_client)
 
 main_loop()
