@@ -1,5 +1,6 @@
 from serverSide.ClientHandlerClass import *
 from serverSide.ServerClass import *
+from Server.requests import ConstantsManagement
 from DB.utils import ServerData
 from threading import Thread, Lock
 
@@ -17,17 +18,17 @@ def process_client(client:ClientHandler, server_data: ServerData):
         if client.auth_token(token=request.client_token):
             return_data = client.find_routes(server_data, request.rq_data['match'], request.rq_data['destination'])
         else:
-            return_data = (ConstantsManagement.BAD_TOKEN.value, None, ConstantsManagement.NO_DATA_TYPE.value)    
+            return_data = (ConstantsManagement.INVALID_TOKEN.value, None, ConstantsManagement.NO_DATA_TYPE.value)
     elif request.rq_type == ConstantsManagement.BUY.value:
         if client.auth_token(token=request.client_token):
             return_data = client.buy_routes(server_data, request.client_token, request.rq_data)
         else:
-            return_data = (ConstantsManagement.BAD_TOKEN.value, None, ConstantsManagement.NO_DATA_TYPE.value)
+            return_data = (ConstantsManagement.INVALID_TOKEN.value, None, ConstantsManagement.NO_DATA_TYPE.value)
     elif request.rq_type == ConstantsManagement.GETTICKETS.value:
         if client.auth_token(token=request.client_token):
             return_data = client.get_tickets(request.client_token)
         else:
-            return_data = (ConstantsManagement.BAD_TOKEN.value, None, ConstantsManagement.NO_DATA_TYPE.value)
+            return_data = (ConstantsManagement.INVALID_TOKEN.value, None, ConstantsManagement.NO_DATA_TYPE.value)
     else:
         return_data = (ConstantsManagement.OPERATION_FAILED.value, None, ConstantsManagement.NO_DATA_TYPE.value)
 
