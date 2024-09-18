@@ -19,7 +19,6 @@ class ClientSocket:
             self.client_socket.connect(self.addr)
             return 1
         except socket.error as e:
-            print(str(e))
             return 0
 
     def end(self):

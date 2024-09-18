@@ -17,7 +17,6 @@ TOKEN_NOT_DEFINED = "Usuario nao conectado"
 
 def send_request(request, client:ClientSocket):
 
-    print(request)
     if client.connect():
         size_transfer = str(len(request)).encode(ENCOD)
         size_transfer += b' ' * (MAX_SIZE_TRANSFER - len(size_transfer))
@@ -27,11 +26,8 @@ def send_request(request, client:ClientSocket):
             client.client_socket.send(request.encode(ENCOD))
             size_transfer = client.client_socket.recv(MAX_SIZE_TRANSFER)
             response_str = client.client_socket.recv(int(size_transfer.decode(ENCOD))).decode(ENCOD)
-            print(response_str)
             server_response = Response()
             server_response.from_json(response_str)
-
-
             response = server_response
 
         except socket.error as e:
@@ -68,7 +64,6 @@ def connect(email, client:ClientSocket):
 def search_routes(match, destination, client:ClientSocket):
     route_request = Request(client_token=client.token, rq_type=METHOD_GETROUTES, rq_data={'match':match, 'destination':destination})
     response = send_request(route_request.to_json(), client)
-    print('chegou no buscar')
     return response.status, response.data
 
 
