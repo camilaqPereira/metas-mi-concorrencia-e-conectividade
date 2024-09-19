@@ -24,6 +24,7 @@ def enumerate_menu(text_opc: list, text: str, clear_str: str):
 
 
     while True:
+        opc = 0
         os.system(clear_str)
         print(text)
         for item in text_opc:
