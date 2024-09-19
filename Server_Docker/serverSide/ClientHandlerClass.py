@@ -1,6 +1,6 @@
 from hashlib import sha256
-from Server_Docker.DB.utils import *
-from Server_Docker.server.requests import *
+from DB.utils import *
+from server.requests import *
 import socket
 from json import load, dump, dumps
 

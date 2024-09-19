@@ -19,7 +19,7 @@ def ysno_menu(text: str, clear_str: str):
             print('opção invalida!')
             sleep(2)
 
-def enumerate_menu(text_opc: list[str], text: str, clear_str: str):
+def enumerate_menu(text_opc: list, text: str, clear_str: str):
     color_list = ['\033[47;30m', '\033[49;0m']
 
 

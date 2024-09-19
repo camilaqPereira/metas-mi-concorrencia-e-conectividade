@@ -1,11 +1,11 @@
 from time import sleep
-from Aplication.Client import requests
-from Aplication.Client import utils
-from Aplication.clientSide import menus
+from Client import requests
+from Client import utils
+from clientSide import menus
 import keyboard
-from Aplication.Client import controller
+from Client import controller
 import os
-from Aplication.Client.ClientSockClass import ClientSocket
+from Client.ClientSockClass import ClientSocket
 from sys import platform
 
 #checar o sistema que o codigo esta sendo rodado
@@ -52,7 +52,7 @@ def buy_route(client: ClientSocket):
             else:
                 print('opção invalida')
                 sleep(2)
-
+        old_data = data
         (status, data) = controller.buying(routes=data[opc], client=client)
 
         if status == requests.ConstantsManagement.OK.value:
@@ -74,9 +74,55 @@ def buy_route(client: ClientSocket):
             buy_route(client=client)
 
         else:
-            print('falha na conexao')
-            sleep(2)
-            buy_route(client)
+            while True:
+                print('falha na conexao, selecione novamente a rota: ')
+                sleep(2)
+
+                os.system(__CLEAR)
+                i = 0
+                print('selecione uma das rotas: ')
+                for flight in old_data:
+                    j = 1
+                    color = color_list[0] if opc == i else color_list[1]
+                    print(f'\t{color}rota {i + 1}:\033[49;0m')
+                    for route in flight:
+                        path = utils.Route()
+                        path.from_string(route)
+                        print(f'\t\tconexao {j}: {path.match} a {path.destination}')
+                        j += 1
+
+                    i += 1
+                opc = int(input('opção: ')) - 1
+
+                if 0 <= opc < len(old_data):
+                    break
+                else:
+                    print('opção invalida')
+                    sleep(2)
+
+                (status, data) = controller.buying(routes=old_data[opc], client=client)
+
+                if status == requests.ConstantsManagement.OK.value:
+                    os.system(__CLEAR)
+                    ticket = requests.Ticket()
+                    ticket.from_json(data)
+                    print("Compra efetuada com sucesso!")
+
+                    print(
+                        f"dados da compra:\n\temail: {ticket.email}\n\tdata: {ticket.timestamp}\n\tde {ticket.routes[0].match} "
+                        f"a {ticket.routes[len(ticket.routes) - 1].destination}")
+
+                    print('pressione enter para retornar ao menu...')
+                    input()
+                    menu(client=client)
+
+                elif status == requests.ConstantsManagement.OPERATION_FAILED.value:
+                    print('falha ao compra passagens, vaga indisponivel\nTente selecionar outra passagem')
+                    sleep(2)
+                    buy_route(client=client)
+                else:
+                    pass
+
 
     elif status == requests.ConstantsManagement.NOT_FOUND.value:
         print('Rotas escolhidas nao existem ou nao estao disponivel')
@@ -88,9 +134,14 @@ def buy_route(client: ClientSocket):
             buy_route(client=client)
         else:
             menu(client)
-    else:
-        print(f"data = {data} e status = {status}")
+    elif status == requests.ConstantsManagement.INVALID_TOKEN.value:
+        print('erro de token, por favor tentar novamente mais tarde')
+        sleep(2)
         main_loop()
+    else:
+        print(f"erro de conexão, por favor realizar comprar novamente")
+        sleep(2)
+        buy_route(client)
 
 
 def seek_bougths(client: ClientSocket):
@@ -117,7 +168,6 @@ def seek_bougths(client: ClientSocket):
     elif status == requests.ConstantsManagement.OPERATION_FAILED.value:
         print('falha ao buscar compras, deseja tentar novamente? ')
         opc = menus.ysno_menu('falha ao buscar compras, deseja tentar novamente? ', __CLEAR)
-
 
         if opc == 0:
             seek_bougths(client=client)
@@ -153,9 +203,14 @@ def submenu_status_token(client: ClientSocket, old_opc):
                 (status, data) = controller.create_account(email, client)
 
                 if status == requests.ConstantsManagement.OK.value:
+                    client.token = data
                     submenu_status_ok(client)
                 elif status == requests.ConstantsManagement.INVALID_TOKEN.value:
                     pass
+                else:
+                    print("não foi possivel criar conta, por favor tentar novamente mais tarde")
+                    sleep(2)
+                    main_loop()
             else:
                 while True:
                     opc = menus.enumerate_menu(['Tentar novamente', 'Sair'], 'Escolha uma opcao:', __CLEAR)
@@ -169,6 +224,7 @@ def submenu_status_token(client: ClientSocket, old_opc):
                         (status, data) = controller.connect(email, client)
 
                         if status == requests.ConstantsManagement.OK.value:
+                            client.token = data
                             submenu_status_ok(client)
                         elif status == requests.ConstantsManagement.INVALID_TOKEN.value:
                             pass
@@ -199,6 +255,7 @@ def submenu_status_token(client: ClientSocket, old_opc):
                     (status, data) = controller.connect(email, client)
 
                     if status == requests.ConstantsManagement.OK.value:
+                        client.token = data
                         submenu_status_ok(client)
                     elif status == requests.ConstantsManagement.INVALID_TOKEN.value:
                         pass
@@ -228,6 +285,7 @@ def submenu_login(client: ClientSocket):
         (status, data) = controller.connect(email, client)
 
         if status == requests.ConstantsManagement.OK.value:
+            client.token = data
             submenu_status_ok(client)
         elif status == requests.ConstantsManagement.INVALID_TOKEN.value:
             submenu_status_token(client, 2)
@@ -256,6 +314,7 @@ def submenu_create_account(client: ClientSocket):
         (status, data) = controller.create_account(email, client)
 
         if status == requests.ConstantsManagement.OK.value:
+            client.token = data
             submenu_status_ok(client)
         elif status == requests.ConstantsManagement.INVALID_TOKEN.value:
             submenu_status_token(client, 1)

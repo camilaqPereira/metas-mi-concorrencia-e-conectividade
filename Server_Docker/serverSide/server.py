@@ -1,7 +1,7 @@
-from Server_Docker.serverSide.ClientHandlerClass import *
-from Server_Docker.serverSide.ServerClass import *
-from Server_Docker.server.requests import ConstantsManagement
-from Server_Docker.DB.utils import ServerData
+from serverSide.ClientHandlerClass import *
+from serverSide.ServerClass import *
+from server.requests import ConstantsManagement
+from DB.utils import ServerData
 from threading import Thread, Lock
 
 backlog_lock = Lock()

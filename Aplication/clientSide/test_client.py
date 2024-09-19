@@ -1,8 +1,8 @@
-from Aplication.Client import utils
-from Aplication.Client import controller
-from Aplication.Client.ClientSockClass import ClientSocket
-from Aplication.Client.requests import Ticket
-from Aplication.Client.utils import Route
+from Client import utils
+from Client import controller
+from Client.ClientSockClass import ClientSocket
+from Client.requests import Ticket
+from Client.utils import Route
 
 ip = input("Digite o IP da maquina: ")
 

@@ -2,7 +2,7 @@ from enum import Enum
 import socket
 import json
 import datetime
-from Aplication.Client.utils import *
+from Client.utils import *
 
 class ConstantsManagement(Enum):
     # Métodos de requisições

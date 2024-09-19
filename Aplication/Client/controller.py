@@ -1,6 +1,6 @@
-from Aplication.Client import requests
-from Aplication.Client.ClientSockClass import *
-from Aplication.Client import utils
+from Client import requests
+from Client.ClientSockClass import *
+from Client import utils
 
 
 MAX_SIZE_TRANSFER = 64
