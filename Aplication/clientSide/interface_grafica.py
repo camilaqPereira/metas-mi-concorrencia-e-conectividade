@@ -45,17 +45,13 @@ def buy_route(client: ClientSocket):
                     j += 1
 
                 i += 1
-            key = keyboard.read_event(True)
-            if key.event_type == keyboard.KEY_DOWN and key.name == 'enter':
+            opc =  int(input('opção: ')) -1
+
+            if 0 <= opc < len(data):
                 break
-            elif key.event_type == keyboard.KEY_DOWN and key.name == 'up' and opc > 0:
-                opc -= 1
-            elif key.event_type == keyboard.KEY_DOWN and key.name == 'down' and opc < number_routes:
-                opc += 1
             else:
-                pass
-
-
+                print('opção invalida')
+                sleep(2)
 
         (status, data) = controller.buying(routes=data[opc], client=client)
 
@@ -69,7 +65,7 @@ def buy_route(client: ClientSocket):
                   f"a {ticket.routes[len(ticket.routes)-1].destination}")
 
             print('pressione enter para retornar ao menu...')
-            keyboard.wait('enter', True)
+            input()
             menu(client=client)
 
         elif status == requests.ConstantsManagement.OPERATION_FAILED.value:
@@ -111,12 +107,12 @@ def seek_bougths(client: ClientSocket):
             i += 1
 
         print('pressione enter para retornar ao menu...')
-        keyboard.wait('enter', True)
+        input()
         menu(client=client)
     elif status == requests.ConstantsManagement.NOT_FOUND.value:
         print('Nao existem comprar associadas a essa conta')
         print('\npressione enter para retornar ao menu...')
-        keyboard.wait('enter', True)
+        input()
         menu(client=client)
     elif status == requests.ConstantsManagement.OPERATION_FAILED.value:
         print('falha ao buscar compras, deseja tentar novamente? ')
