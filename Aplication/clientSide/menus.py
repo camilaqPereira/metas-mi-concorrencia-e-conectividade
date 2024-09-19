@@ -20,7 +20,6 @@ def ysno_menu(text: str, clear_str: str):
             sleep(2)
 
 def enumerate_menu(text_opc: list[str], text: str, clear_str: str):
-    opc = 0
     color_list = ['\033[47;30m', '\033[49;0m']
 
 
