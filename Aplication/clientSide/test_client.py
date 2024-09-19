@@ -1,11 +1,11 @@
 import sys
 sys.path.append('..')
 
-from Server import utils
+from Client import utils
 from Client import controller
 from Client.ClientSockClass import ClientSocket
-from Server.TicketClass import Ticket
-from Server.RouteClass import Route
+from Client.requests import Ticket
+from Client.utils import Route
 
 ip = input("Digite o IP da maquina: ")
 

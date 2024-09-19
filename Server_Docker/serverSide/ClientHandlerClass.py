@@ -1,6 +1,6 @@
 from hashlib import sha256
 from DB.utils import *
-from Server.requests import *
+from server.requests import *
 import socket
 from json import load, dump, dumps
 
