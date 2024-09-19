@@ -18,10 +18,11 @@ else:
 
 def buy_route(client: ClientSocket):
     os.system(__CLEAR)
-    match = input('digite de onde voce esta saindo:')
+    match = input('digite de onde voce esta saindo: ')
     destination = input('digite para onde voce deseja ir: ')
 
     (status, data) = controller.search_routes(match=match, destination=destination, client=client)
+
     color_list = ['\033[47;30m', '\033[49;0m']
 
     if  status == requests.ConstantsManagement.OK.value:
@@ -53,6 +54,7 @@ def buy_route(client: ClientSocket):
                 print('opção invalida')
                 sleep(2)
         old_data = data
+
         (status, data) = controller.buying(routes=data[opc], client=client)
 
         if status == requests.ConstantsManagement.OK.value:
@@ -61,12 +63,19 @@ def buy_route(client: ClientSocket):
             ticket.from_json(data)
             print("Compra efetuada com sucesso!")
 
-            print(f"dados da compra:\n\temail: {ticket.email}\n\tdata: {ticket.timestamp}\n\tde {ticket.routes[0].match} "
-                  f"a {ticket.routes[len(ticket.routes)-1].destination}")
+            print(f"dados da compra:\n\temail: {ticket.email}\n\tdata: {ticket.timestamp}")
+
+
+            i = 1
+            for item in ticket.routes:
+                print(f"\tConexão {i}:")  
+                print(f"\t\tDe: {item[0]}\tPara: {item[1]}")
+
+                i+=1
 
             print('pressione enter para retornar ao menu...')
             input()
-            menu(client=client)
+            submenu_status_ok(client=client)
 
         elif status == requests.ConstantsManagement.OPERATION_FAILED.value:
             print('falha ao compra passagens, vaga indisponivel\nTente selecionar outra passagem')
@@ -108,13 +117,17 @@ def buy_route(client: ClientSocket):
                     ticket.from_json(data)
                     print("Compra efetuada com sucesso!")
 
-                    print(
-                        f"dados da compra:\n\temail: {ticket.email}\n\tdata: {ticket.timestamp}\n\tde {ticket.routes[0].match} "
-                        f"a {ticket.routes[len(ticket.routes) - 1].destination}")
+                    print(f"dados da compra:\n\temail: {ticket.email}\n\tdata: {ticket.timestamp}")
+                    i = 1
+                    for item in ticket.routes:
+                        print(f"\tConexão {i}:")  
+                        print(f"\t\tDe: {item[0]}\tPara: {item[1]}")
+
+                        i+=1
 
                     print('pressione enter para retornar ao menu...')
                     input()
-                    menu(client=client)
+                    submenu_status_ok(client=client)
 
                 elif status == requests.ConstantsManagement.OPERATION_FAILED.value:
                     print('falha ao compra passagens, vaga indisponivel\nTente selecionar outra passagem')
@@ -126,14 +139,14 @@ def buy_route(client: ClientSocket):
 
     elif status == requests.ConstantsManagement.NOT_FOUND.value:
         print('Rotas escolhidas nao existem ou nao estao disponivel')
-        menu(client)
+        submenu_status_ok(client)
     elif status == requests.ConstantsManagement.OPERATION_FAILED.value:
         opc = menus.ysno_menu('falha ao buscar rotas, deseja tentar novamente?', __CLEAR)
 
         if opc == 0:
             buy_route(client=client)
         else:
-            menu(client)
+            submenu_status_ok(client)
     elif status == requests.ConstantsManagement.INVALID_TOKEN.value:
         print('erro de token, por favor tentar novamente mais tarde')
         sleep(2)
@@ -151,20 +164,28 @@ def seek_bougths(client: ClientSocket):
 
     if status == requests.ConstantsManagement.OK.value:
         i = 0
+        
         print('suas compras:')
-        for ticket in data:
-            print(f'compra {i+1}:\n\temail: {ticket.email}\n\tdata: {ticket.timestamp}\n\tSaida: {ticket.routes[0].match} '
-                  f'a {ticket.routes[len(ticket.routes) - 1].destination}')
+        for buy in data:
+            ts = buy.get('timestamp')
+            route = buy.get('routes')
+            print(f'compra {i+1}:\n\tdata: {ts}')
+            j = 1
+            for item in route:
+                print(f"\tConexão {j}:")  
+                print(f"\t\tDe: {item[0]}\tPara: {item[1]}")
+
+                j+=1
             i += 1
 
         print('pressione enter para retornar ao menu...')
         input()
-        menu(client=client)
+        submenu_status_ok(client=client)
     elif status == requests.ConstantsManagement.NOT_FOUND.value:
         print('Nao existem comprar associadas a essa conta')
         print('\npressione enter para retornar ao menu...')
         input()
-        menu(client=client)
+        submenu_status_ok(client=client)
     elif status == requests.ConstantsManagement.OPERATION_FAILED.value:
         print('falha ao buscar compras, deseja tentar novamente? ')
         opc = menus.ysno_menu('falha ao buscar compras, deseja tentar novamente? ', __CLEAR)
