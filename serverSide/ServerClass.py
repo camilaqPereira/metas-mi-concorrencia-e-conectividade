@@ -1,10 +1,10 @@
-from Server.ClientHandlerClass import ClientHandler
-from Server.utils import HOST
+
+from server.requests import ConstantsManagement
 import socket
 
 class Server:
     _instance = None
-    backlog_clients = {}
+    backlog_clients = []
 
     def __new__(cls):
         if not cls._instance:
@@ -19,7 +19,7 @@ class Server:
     
     def init_socket(self, port):
         status = False
-        addr_socket = (HOST, port)
+        addr_socket = (ConstantsManagement.HOST.value, port)
 
         try:
             #Bind do socket
@@ -35,11 +35,11 @@ class Server:
     
     @classmethod
     def add_client(cls, client):
-        cls.backlog_clients[client] = None
+        cls.backlog_clients.append(client)
 
     @classmethod
     def remove_client(cls, client):
-        cls.backlog_clients.pop(client)
+        cls.backlog_clients.remove(client)
 
 
        
