@@ -5,7 +5,7 @@ from Server_Docker.server.requests import Request, ConstantsManagement
 
 sock = ClientSocket(socket.gethostbyname(socket.gethostname()))
 sock.connect()
-request = Request(rq_type=ConstantsManagement.GETTOKEN.value, rq_data="panda")
+request = Request(rq_type=ConstantsManagement.GETTICKETS.value, rq_data=None, client_token="a7cdf5d0586b392473dd0cd08c9ba833240006a8a7310bf9bc8bf1aefdfaeadb")
 rq_json = request.to_json()
 
 msg_len = len(rq_json)
