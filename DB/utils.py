@@ -1,5 +1,5 @@
 from enum import Enum
-from json import load
+from json import load, dump
 import os
 import numpy as np
 from scipy.sparse import csr_matrix, csgraph
@@ -38,6 +38,16 @@ class ServerData:
         self.sparse_matrix = self.__create_sparse_matrix()
         self.matches_and_destinations = self.__init_matches_and_destinations()
         self.flights = self.__init_flights()
+        self.__init_database()
+
+    def __init_database(self):
+        if not os.path.exists(FilePathsManagement.USERS_FILE_PATH.value):
+            with open(FilePathsManagement.USERS_FILE_PATH.value, 'x') as file:
+                dump({}, file)
+        if not os.path.exists(FilePathsManagement.TICKETS_FILE_PATH.value):
+            with open(FilePathsManagement.TICKETS_FILE_PATH.value, 'x') as file:
+                dump({}, file)
+
 
     def __parse_to_dict(self, item):
         loaded_dict = {int(key): value for key, value in item}
@@ -49,7 +59,7 @@ class ServerData:
         try:
             with open(FilePathsManagement.GRAPH_FILE_PATH.value, 'r') as file:
                 adj_list = load(file, object_pairs_hook=self.__parse_to_dict)
-        except:
+        except FileNotFoundError:
             adj_list = {}
         return adj_list
 
