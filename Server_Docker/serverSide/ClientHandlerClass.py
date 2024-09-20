@@ -7,7 +7,7 @@ from threading import Lock
 
 class ClientHandler:
     #Mutexes
-    users_file_lock = Lock()
+    
     tickets_file_lock = Lock()
 
     def __init__(self, conn:socket = None, addr = None):  
@@ -16,39 +16,11 @@ class ClientHandler:
     
     def __create_token(self, email):
         return sha256(email.encode(ConstantsManagement.FORMAT.value)).hexdigest()
-    
-    def __load_users(self):
-        try:
-            with ClientHandler.users_file_lock:
-                with open(FilePathsManagement.USERS_FILE_PATH.value, 'r') as file:
-                    users = load(file)
-        except FileNotFoundError:
-            users = {}
-        return users
-    
-    def __save_user(self, email, token):
-        try:
-            with ClientHandler.users_file_lock:
-                with open(FilePathsManagement.USERS_FILE_PATH.value, 'r+') as file:
-                    users:dict = load(file)
-                    if email in users:
-                        raise ValueError('User already exists!')
-                    else:
-                        file.seek(0)
-                        users[email] = token
-                        dump(users, file, indent=4)
-            return True
-        except FileNotFoundError:
-            print(f'[SERVER] Users file not found')
-            return False
-        except ValueError:
-            print(f'[SERVER] User email already exists.')
-            return False
 
 
     def create_user(self, email:str):
         token = self.__create_token(email)
-        created_status = self.__save_user(email, token)
+        created_status = UsersData.save_user(email, token)
         if created_status:
             return (ConstantsManagement.OK.value, token, ConstantsManagement.TOKEN_TYPE.value)
         else:
@@ -56,7 +28,7 @@ class ClientHandler:
         
 
     def get_token(self, email:str):
-        users:dict = self.__load_users()
+        users:dict = UsersData.load_users()
         token = users.get(email)
         if token:
             return (ConstantsManagement.OK.value, token, ConstantsManagement.TOKEN_TYPE.value)
@@ -64,7 +36,7 @@ class ClientHandler:
             return (ConstantsManagement.NOT_FOUND.value, None, ConstantsManagement.NO_DATA_TYPE.value)
     
     def auth_token(self, token = None):
-        users:dict = self.__load_users()
+        users:dict = UsersData.load_users()
         if token and (token in users.values()):
             return True
         else:
@@ -106,7 +78,7 @@ class ClientHandler:
         return (ConstantsManagement.OK.value, ticket.to_json(), ConstantsManagement.TICKET_TYPE.value)
             
     def __get_email(self, token):
-        users:dict = self.__load_users()
+        users:dict = UsersData.load_users()
 
         for user, client_token in users.items():
             if client_token == token:
