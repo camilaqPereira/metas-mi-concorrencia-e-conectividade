@@ -2,9 +2,10 @@ import socket
 from Aplication.Client.ClientSockClass import *
 from Server_Docker.server.requests import Request, ConstantsManagement
 
+
 sock = ClientSocket(socket.gethostbyname(socket.gethostname()))
 sock.connect()
-request = Request(rq_type=ConstantsManagement.GETTICKETS.value, rq_data=None, client_token="7950649bc82fbbc915e453cb4d705d1f9f2a709f64a98d5f30d473de2e5e0e02")
+request = Request(rq_type=ConstantsManagement.GETTOKEN.value, rq_data="panda")
 rq_json = request.to_json()
 
 msg_len = len(rq_json)
