@@ -1,9 +1,7 @@
-
-import sys
 from time import sleep
-from Server import requests
-from DB import utils
-import menus
+from Client import requests
+from Client import utils
+from clientSide import menus
 import keyboard
 from Client import controller
 import os

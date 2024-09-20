@@ -1,8 +1,6 @@
 import socket
 
 class ClientSocket:
-    __CONNECT_MSG = '!OK'
-    __ENCOD_FORMAT = 'utf-8'
 
     def __init__(self, ip=''):
         self.addr = None

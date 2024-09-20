@@ -1,7 +1,6 @@
-import sys
-from Server import requests
+from Client import requests
 from Client.ClientSockClass import *
-from DB import utils
+from Client import utils
 
 
 MAX_SIZE_TRANSFER = 64

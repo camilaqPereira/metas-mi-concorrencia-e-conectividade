@@ -1,5 +1,5 @@
 import socket
-from client.ClientSockClass import *
+from Client.ClientSockClass import *
 from server.requests import Request, ConstantsManagement
 
 sock = ClientSocket(socket.gethostbyname(socket.gethostname()))
