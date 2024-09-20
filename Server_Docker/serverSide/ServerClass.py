@@ -1,4 +1,4 @@
-from server.requests import ConstantsManagement
+from Server_Docker.server.requests import ConstantsManagement
 import socket
 
 class Server:

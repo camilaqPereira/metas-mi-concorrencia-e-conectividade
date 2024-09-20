@@ -1,6 +1,6 @@
 import socket
-from Client.ClientSockClass import *
-from server.requests import Request, ConstantsManagement
+from Aplication.Client.ClientSockClass import *
+from Server_Docker.server.requests import Request, ConstantsManagement
 
 sock = ClientSocket(socket.gethostbyname(socket.gethostname()))
 sock.connect()
