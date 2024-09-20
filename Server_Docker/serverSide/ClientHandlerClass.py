@@ -3,7 +3,6 @@ from Server_Docker.DB.utils import *
 from Server_Docker.server.requests import *
 import socket
 from json import load, dump, dumps
-from threading import Lock
 
 class ClientHandler:
 
@@ -86,9 +85,12 @@ class ClientHandler:
                 with open(FilePathsManagement.TICKETS_FILE_PATH.value, 'r') as file:
                     all_tickets:dict = load(file)   
             email = self.__get_email(token)
-            users_tickets = all_tickets.get(email)
-            return (ConstantsManagement.OK.value, users_tickets, ConstantsManagement.TICKET_TYPE.value)
-        except FileNotFoundError:
+            if email:
+                users_tickets = all_tickets.get(email)
+                return (ConstantsManagement.OK.value, users_tickets, ConstantsManagement.TICKET_TYPE.value)
+            else:
+                raise ValueError()
+        except FileNotFoundError or ValueError:
             return (ConstantsManagement.NOT_FOUND.value, None, ConstantsManagement.NO_DATA_TYPE.value)
 
 
