@@ -71,7 +71,7 @@ class Response:
 
         self.data = response['data']
         self.rs_type = response['type']
-        self.timestamp = datetime.datetime.strptime(response['timestamp'], '%d/%m/%y %H:%M:%S')
+        self.timestamp = datetime.datetime.strptime(response['timestamp'], '%d/%m/%Y %H:%M:%S')
         self.status = response['status']
 
 class Ticket:
@@ -81,7 +81,7 @@ class Ticket:
         self.routes = routes
 
     def save(self):
-        data = {'timestamp': self.timestamp.strftime('%d/%m/%y %H:%M:%S'), 'routes': self.routes}
+        data = {'timestamp': self.timestamp.strftime('%d/%m/%Y %H:%M:%S'), 'routes': self.routes}
         try:
             with open(FilePathsManagement.TICKETS_FILE_PATH.value, 'x+') as file:
                 json.dump({self.email: [data]}, file)
@@ -99,11 +99,11 @@ class Ticket:
         values = json.loads(json_str)
 
         self.email = values['email']
-        self.timestamp = datetime.datetime.strptime(values['timestamp'], '%d/%m/%y %H:%M:%S')
+        self.timestamp = datetime.datetime.strptime(values['timestamp'], '%d/%m/%Y %H:%M:%S')
         self.routes = values['routes']
 
     def to_json(self):
-        json_str = {'email': self.email, 'timestamp':self.timestamp.strftime('%d/%m/%y %H:%M:%S'), 'routes':self.routes}
+        json_str = {'email': self.email, 'timestamp':self.timestamp.strftime('%d/%m/%Y %H:%M:%S'), 'routes':self.routes}
 
         return json_str
 
