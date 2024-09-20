@@ -57,15 +57,15 @@ class ClientHandler:
             except ValueError:
                 return (ConstantsManagement.OPERATION_FAILED.value, None, ConstantsManagement.NO_DATA_TYPE.value)
             
-            for item in routes_keys:
-                server_data.dec_flight_sits(item)
-            
-            try:
-                with open(FilePathsManagement.ROUTES_DATA_FILE_PATH.value, 'w') as file:
-                    dump(server_data.parse_flights_to_str(), file)
-            except FileNotFoundError:
-                print("[SERVER] Could not update the graph file! File doesn't exist")
+        for item in routes_keys:
+            server_data.dec_flight_sits(item)
         
+        try:
+            with open(FilePathsManagement.ROUTES_DATA_FILE_PATH.value, 'w') as file:
+                dump(server_data.parse_flights_to_str(), file)
+        except FileNotFoundError:
+            print("[SERVER] Could not update the graph file! File doesn't exist")
+    
 
         ticket = Ticket(self.__get_email(token), routes)
         ticket.save()
@@ -80,19 +80,15 @@ class ClientHandler:
         return None
         
     def get_tickets(self, token):
-        try:
-            with Ticket.tickets_file_lock:
-                with open(FilePathsManagement.TICKETS_FILE_PATH.value, 'r') as file:
-                    all_tickets:dict = load(file)   
-            email = self.__get_email(token)
-            if email:
-                users_tickets = all_tickets.get(email)
-                return (ConstantsManagement.OK.value, users_tickets, ConstantsManagement.TICKET_TYPE.value)
-            else:
-                raise ValueError()
-        except FileNotFoundError or ValueError:
-            return (ConstantsManagement.NOT_FOUND.value, None, ConstantsManagement.NO_DATA_TYPE.value)
+        email = self.__get_email(token)
+        all_tickets:dict = Ticket.load_tickets()
+        users_tickets = all_tickets.get(email)
 
+        if email and users_tickets:
+            return (ConstantsManagement.OK.value, users_tickets, ConstantsManagement.TICKET_TYPE.value)
+        
+        return (ConstantsManagement.NOT_FOUND.value, None, ConstantsManagement.NO_DATA_TYPE.value)
+        
 
     def receive_pkt(self):
         pkt = Request()
