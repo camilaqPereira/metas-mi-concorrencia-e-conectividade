@@ -83,9 +83,6 @@ class Ticket:
     def save(self):
         data = {'timestamp': self.timestamp.strftime('%d/%m/%y %H:%M:%S'), 'routes': self.routes}
         try:
-            with open(FilePathsManagement.TICKETS_FILE_PATH.value, 'x+') as file:
-                json.dump({self.email: [data]}, file)
-        except FileExistsError:
             with open(FilePathsManagement.TICKETS_FILE_PATH.value, 'r+') as file:
                 all_tickets = json.load(file)
                 if self.email in all_tickets:
@@ -94,6 +91,12 @@ class Ticket:
                     all_tickets[self.email] = [data]
                 file.seek(0)
                 json.dump(all_tickets, file)
+            return True
+        except FileNotFoundError:
+            print(f'[SERVER] Error saving ticket! File not found')
+            return False
+        except json.JSONDecodeError:
+            print(f'[SERVER] Error saving ticket! Tickets json file empty or invalid')
 
     def from_json(self, json_str):
         values = json.loads(json_str)
