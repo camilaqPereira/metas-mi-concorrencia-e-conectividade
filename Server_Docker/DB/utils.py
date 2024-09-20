@@ -119,9 +119,12 @@ class ServerData:
                         self.sparse_matrix[origin, destination] = new_weight
 
     def get_flight_sit(self, flight:tuple):
-        with ServerData.flights_lock:
-            sits = self.flights[flight].sits
-        return sits
+        try:
+            with ServerData.flights_lock:
+                sits = self.flights[flight].sits
+            return sits
+        except KeyError:
+            raise KeyError
     def dec_flight_sits(self, flight:tuple):
         with ServerData.flights_lock:
             self.flights[flight].sits -= 1
