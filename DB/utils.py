@@ -3,7 +3,7 @@ from json import load, dump
 import os
 import numpy as np
 from scipy.sparse import csr_matrix, csgraph
-
+from threading import Lock
 
 class FilePathsManagement(Enum):
     PARENT_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
@@ -33,6 +33,10 @@ class Route:
 
 
 class ServerData:
+    matrix_lock = Lock()
+    flights_lock = Lock()
+    adjacency_lock = Lock()
+
     def __init__(self):
         self.adjacency_list = self.__init_adjacency_list()
         self.sparse_matrix = self.__create_sparse_matrix()
@@ -94,30 +98,49 @@ class ServerData:
         return flights
     
     def add_graph_node(self, node:int):
-        if node not in self.adjacency_list:
-            self.adjacency_list[node] = []
+        with ServerData.adjacency_lock:
+            if node not in self.adjacency_list:
+                self.adjacency_list[node] = []
     
     def add_graph_edge(self, origin:int, destination:int, weight:int):
         self.add_graph_node(origin)
         self.add_graph_node(destination)
-        self.adjacency_list[origin].append((destination, weight))
+        with ServerData.adjacency_lock:
+            self.adjacency_list[origin].append((destination, weight))
     
     def set_graph_edge_weight(self, origin:int, destination:int, new_weight:int):
-        if origin in self.adjacency_list:
-            for neighbor in self.adjacency_list.get(origin):
-                if neighbor[0] == destination:
-                    self.adjacency_list[origin][destination] = [destination, new_weight]
-                    self.sparse_matrix[origin, destination] = new_weight
+        with ServerData.adjacency_lock, ServerData.matrix_lock: 
+            if origin in self.adjacency_list:
+                for neighbor in self.adjacency_list.get(origin):
+                    if neighbor[0] == destination:
+                        self.adjacency_list[origin][destination] = [destination, new_weight]
+                        self.sparse_matrix[origin, destination] = new_weight
 
-    def search_route(self, match:int, destination:int):
-        match_index = self.matches_and_destinations.index(match)
-        destination_index = self.matches_and_destinations.index(destination)
+    def get_flight_sit(self, flight:tuple):
+        with ServerData.flights_lock:
+            sits = self.flights[flight].sits
+        return sits
+    def dec_flight_sits(self, flight:tuple):
+        with ServerData.flights_lock:
+            self.flights[flight].sits -= 1
+        if not self.flights[flight].sits:
+            self.set_graph_edge_weight(flight[0], flight[1], 9999)
+            with ServerData.matrix_lock:
+                self.sparse_matrix[flight[0], flight[1], 9999]
+        
+    def search_route(self, match:str, destination:str):
+        try:
+            match_index = self.matches_and_destinations.index(match)
+            destination_index = self.matches_and_destinations.index(destination)
+        except ValueError:
+            return None
 
-        shortest_paths, predecessors_mtx = csgraph.yen(self.sparse_matrix, source = match_index, sink = destination_index, K=3, return_predecessors=True)
+        with ServerData.matrix_lock:
+            shortest_paths, predecessors_mtx = csgraph.yen(self.sparse_matrix, source = match_index, sink = destination_index, K=3, return_predecessors=True)
 
         paths = []
         for i in range(len(shortest_paths)):
-            if(shortest_paths[i] > 9999): #checking for
+            if(shortest_paths[i] > 9999): #checando por rotas esgotadas
                 continue
             
             new_path = []
@@ -132,19 +155,15 @@ class ServerData:
     
     def __convert_paths(self, paths:list):
         routes = []
-        for i in range(len(paths)):
-            routes.append([])
-            for j in range(len(paths[i])-1):
-                key = (paths[i][j], paths[i][j+1])
-                routes[i].append(self.flights.get(key).to_string())
+        with ServerData.flights_lock:
+            for i in range(len(paths)):
+                routes.append([])
+                for j in range(len(paths[i])-1):
+                    key = (paths[i][j], paths[i][j+1])
+                    routes[i].append(self.flights.get(key).to_string())
         return routes
     
     def parse_flights_to_str(self):
         return {f"{key}": value.to_string() for key, value in self.flights.items()}
 
-def parse_to_dict(item):
-    loaded_dict = {int(key): value for key, value in item}
-    for key in loaded_dict:
-        loaded_dict[key] = [tuple(row) for row in loaded_dict[key]]
-    return loaded_dict
 
