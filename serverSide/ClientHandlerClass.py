@@ -9,6 +9,8 @@ import time
 class ClientHandler:
     #Mutexes
     users_file_lock = Lock()
+    tickets_file_lock = Lock()
+    graph_lock = Lock()
 
     def __init__(self, conn:socket = None, addr = None):  
         self.conn = conn
@@ -20,8 +22,6 @@ class ClientHandler:
     def __load_users(self):
         try:
             with ClientHandler.users_file_lock:
-                print('Lock adquired!')
-                time.sleep(5)
                 with open(FilePathsManagement.USERS_FILE_PATH.value, 'r') as file:
                     users = load(file)
         except FileNotFoundError:
@@ -75,7 +75,6 @@ class ClientHandler:
         else:
             found_routes = server_data.search_route(match, destination)
             if found_routes[0]:
-
                 return (ConstantsManagement.OK.value, found_routes, ConstantsManagement.ROUTE_TYPE.value)
             else:
                 return (ConstantsManagement.NOT_FOUND.value, None, ConstantsManagement.NO_DATA_TYPE.value)
