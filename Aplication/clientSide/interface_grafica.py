@@ -1,11 +1,11 @@
 from time import sleep
-from Client import requests
-from Client import utils
-from clientSide import menus
+from Aplication.Client import requests
+from Aplication.Client import utils
+from Aplication.clientSide import menus
 import keyboard
-from Client import controller
+from Aplication.Client import controller
 import os
-from Client.ClientSockClass import ClientSocket
+from Aplication.Client.ClientSockClass import ClientSocket
 from sys import platform
 
 #checar o sistema que o codigo esta sendo rodado
@@ -24,7 +24,7 @@ def buy_route(client: ClientSocket):
     (status, data) = controller.search_routes(match=match, destination=destination, client=client)
     color_list = ['\033[47;30m', '\033[49;0m']
 
-    if  status == requests.ConstantsManagement.OK:
+    if  status == requests.ConstantsManagement.OK.value:
         number_routes = len(data)
 
         i = 0
@@ -45,21 +45,17 @@ def buy_route(client: ClientSocket):
                     j += 1
 
                 i += 1
-            key = keyboard.read_event(True)
-            if key.event_type == keyboard.KEY_DOWN and key.name == 'enter':
+            opc =  int(input('opção: ')) -1
+
+            if 0 <= opc < len(data):
                 break
-            elif key.event_type == keyboard.KEY_DOWN and key.name == 'up' and opc > 0:
-                opc -= 1
-            elif key.event_type == keyboard.KEY_DOWN and key.name == 'down' and opc < number_routes:
-                opc += 1
             else:
-                pass
-
-
+                print('opção invalida')
+                sleep(2)
 
         (status, data) = controller.buying(routes=data[opc], client=client)
 
-        if status == requests.ConstantsManagement.OK:
+        if status == requests.ConstantsManagement.OK.value:
             os.system(__CLEAR)
             ticket = requests.Ticket()
             ticket.from_json(data)
@@ -69,10 +65,10 @@ def buy_route(client: ClientSocket):
                   f"a {ticket.routes[len(ticket.routes)-1].destination}")
 
             print('pressione enter para retornar ao menu...')
-            keyboard.wait('enter', True)
+            input()
             menu(client=client)
 
-        elif status == requests.ConstantsManagement.OPERATION_FAILED:
+        elif status == requests.ConstantsManagement.OPERATION_FAILED.value:
             print('falha ao compra passagens, vaga indisponivel\nTente selecionar outra passagem')
             sleep(2)
             buy_route(client=client)
@@ -80,12 +76,12 @@ def buy_route(client: ClientSocket):
         else:
             print('falha na conexao')
             sleep(2)
-            main_loop()
+            buy_route(client)
 
-    elif status == requests.ConstantsManagement.NOT_FOUND:
+    elif status == requests.ConstantsManagement.NOT_FOUND.value:
         print('Rotas escolhidas nao existem ou nao estao disponivel')
         menu(client)
-    elif status == requests.ConstantsManagement.OPERATION_FAILED:
+    elif status == requests.ConstantsManagement.OPERATION_FAILED.value:
         opc = menus.ysno_menu('falha ao buscar rotas, deseja tentar novamente?', __CLEAR)
 
         if opc == 0:
@@ -102,7 +98,7 @@ def seek_bougths(client: ClientSocket):
     os.system(__CLEAR)
     (status, data) = controller.search_bougths(client=client)
 
-    if status == requests.ConstantsManagement.OK:
+    if status == requests.ConstantsManagement.OK.value:
         i = 0
         print('suas compras:')
         for ticket in data:
@@ -111,14 +107,14 @@ def seek_bougths(client: ClientSocket):
             i += 1
 
         print('pressione enter para retornar ao menu...')
-        keyboard.wait('enter', True)
+        input()
         menu(client=client)
-    elif status == requests.ConstantsManagement.NOT_FOUND:
+    elif status == requests.ConstantsManagement.NOT_FOUND.value:
         print('Nao existem comprar associadas a essa conta')
         print('\npressione enter para retornar ao menu...')
-        keyboard.wait('enter', True)
+        input()
         menu(client=client)
-    elif status == requests.ConstantsManagement.OPERATION_FAILED:
+    elif status == requests.ConstantsManagement.OPERATION_FAILED.value:
         print('falha ao buscar compras, deseja tentar novamente? ')
         opc = menus.ysno_menu('falha ao buscar compras, deseja tentar novamente? ', __CLEAR)
 
@@ -156,9 +152,9 @@ def submenu_status_token(client: ClientSocket, old_opc):
 
                 (status, data) = controller.create_account(email, client)
 
-                if status == requests.ConstantsManagement.OK:
+                if status == requests.ConstantsManagement.OK.value:
                     submenu_status_ok(client)
-                elif status == requests.ConstantsManagement.INVALID_TOKEN:
+                elif status == requests.ConstantsManagement.INVALID_TOKEN.value:
                     pass
             else:
                 while True:
@@ -172,15 +168,15 @@ def submenu_status_token(client: ClientSocket, old_opc):
 
                         (status, data) = controller.connect(email, client)
 
-                        if status == requests.ConstantsManagement.OK:
+                        if status == requests.ConstantsManagement.OK.value:
                             submenu_status_ok(client)
-                        elif status == requests.ConstantsManagement.INVALID_TOKEN:
+                        elif status == requests.ConstantsManagement.INVALID_TOKEN.value:
                             pass
-                        elif status == requests.ConstantsManagement.NOT_FOUND:
+                        elif status == requests.ConstantsManagement.NOT_FOUND.value:
                             print('usuario nao encontrado')
                             sleep(2)
                             submenu_create_account(client)
-                        elif status == requests.ConstantsManagement.OPERATION_FAILED:
+                        elif status == requests.ConstantsManagement.OPERATION_FAILED.value:
                             print('conta ja existente\nPor favor fazer login')
                             sleep(2)
                             submenu_login(client)
@@ -202,15 +198,15 @@ def submenu_status_token(client: ClientSocket, old_opc):
 
                     (status, data) = controller.connect(email, client)
 
-                    if status == requests.ConstantsManagement.OK:
+                    if status == requests.ConstantsManagement.OK.value:
                         submenu_status_ok(client)
-                    elif status == requests.ConstantsManagement.INVALID_TOKEN:
+                    elif status == requests.ConstantsManagement.INVALID_TOKEN.value:
                         pass
-                    elif status == requests.ConstantsManagement.NOT_FOUND:
+                    elif status == requests.ConstantsManagement.NOT_FOUND.value:
                         print('usuario nao encontrado')
                         sleep(2)
                         submenu_create_account(client)
-                    elif status == requests.ConstantsManagement.OPERATION_FAILED:
+                    elif status == requests.ConstantsManagement.OPERATION_FAILED.value:
                         print('conta ja existente\nPor favor fazer login')
                         sleep(2)
                         submenu_login(client)
@@ -231,15 +227,15 @@ def submenu_login(client: ClientSocket):
 
         (status, data) = controller.connect(email, client)
 
-        if status == requests.ConstantsManagement.OK:
+        if status == requests.ConstantsManagement.OK.value:
             submenu_status_ok(client)
-        elif status == requests.ConstantsManagement.INVALID_TOKEN:
+        elif status == requests.ConstantsManagement.INVALID_TOKEN.value:
             submenu_status_token(client, 2)
-        elif status == requests.ConstantsManagement.NOT_FOUND:
+        elif status == requests.ConstantsManagement.NOT_FOUND.value:
             print('usuario nao encontrado')
             sleep(2)
             submenu_create_account(client)
-        elif status == requests.ConstantsManagement.OPERATION_FAILED:
+        elif status == requests.ConstantsManagement.OPERATION_FAILED.value:
             print('conta ja existente\nPor favor fazer login')
             sleep(2)
             submenu_login(client)
@@ -259,15 +255,15 @@ def submenu_create_account(client: ClientSocket):
 
         (status, data) = controller.create_account(email, client)
 
-        if status == requests.ConstantsManagement.OK:
+        if status == requests.ConstantsManagement.OK.value:
             submenu_status_ok(client)
-        elif status == requests.ConstantsManagement.INVALID_TOKEN:
+        elif status == requests.ConstantsManagement.INVALID_TOKEN.value:
             submenu_status_token(client, 1)
-        elif status == requests.ConstantsManagement.NOT_FOUND:
+        elif status == requests.ConstantsManagement.NOT_FOUND.value:
             print('usuario nao encontrado')
             sleep(2)
             submenu_create_account(client)
-        elif status == requests.ConstantsManagement.OPERATION_FAILED:
+        elif status == requests.ConstantsManagement.OPERATION_FAILED.value:
             print('conta ja existente\nPor favor fazer login')
             sleep(2)
             submenu_login(client)
@@ -298,20 +294,20 @@ def menu(client: ClientSocket):
         else:
             exit(1)
 
-        if status == requests.ConstantsManagement.OK:
+        if status == requests.ConstantsManagement.OK.value:
             client.token = data
             submenu_status_ok(client=client)
-        elif status == requests.ConstantsManagement.INVALID_TOKEN:
+        elif status == requests.ConstantsManagement.INVALID_TOKEN.value:
             submenu_status_token(client, opc)
-        elif status == requests.ConstantsManagement.NOT_FOUND:
+        elif status == requests.ConstantsManagement.NOT_FOUND.value:
             print('Nao foi possivel encontrar uma conta')
             sleep(2)
             submenu_create_account(client)
-        elif status == requests.ConstantsManagement.OPERATION_FAILED and opc == 0:
+        elif status == requests.ConstantsManagement.OPERATION_FAILED.value and opc == 0:
             print('conta ja existe\npor favor fazer login')
             sleep(2)
             submenu_login(client)
-        elif  status == requests.ConstantsManagement.OPERATION_FAILED and opc == 1:
+        elif  status == requests.ConstantsManagement.OPERATION_FAILED.value and opc == 1:
             print('conta nao existe\npor favor fazer criar conta')
             sleep(2)
             submenu_status_token(client, 1)
@@ -325,7 +321,6 @@ def main_loop():
     ip = input("Digite o IP do servidor: ")
 
     new_client = ClientSocket(ip=ip)
-
 
     if new_client.connect():
         os.system(__CLEAR)
