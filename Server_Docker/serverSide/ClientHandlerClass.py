@@ -47,7 +47,6 @@ class ClientHandler:
 
     def buy_routes(self, server_data:ServerData, token, routes:list):
         routes_keys = []
-        #lock
         for item in routes: #verificando validade dos voos 
             try:
                 flight_key = (server_data.matches_and_destinations.index(item[0]), server_data.matches_and_destinations.index(item[1]))
@@ -60,12 +59,7 @@ class ClientHandler:
         for item in routes_keys:
             server_data.dec_flight_sits(item)
         
-        try:
-            with open(FilePathsManagement.ROUTES_DATA_FILE_PATH.value, 'w') as file:
-                dump(server_data.parse_flights_to_str(), file)
-        except FileNotFoundError:
-            print("[SERVER] Could not update the graph file! File doesn't exist")
-    
+        server_data.save_graph()
 
         ticket = Ticket(self.__get_email(token), routes)
         ticket.save()

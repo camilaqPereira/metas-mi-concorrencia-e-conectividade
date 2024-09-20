@@ -111,9 +111,11 @@ class ServerData:
     def set_graph_edge_weight(self, origin:int, destination:int, new_weight:int):
         with ServerData.adjacency_lock, ServerData.matrix_lock: 
             if origin in self.adjacency_list:
-                for neighbor in self.adjacency_list.get(origin):
+                neighbors = self.adjacency_list.get(origin)
+                for neighbor in neighbors:
                     if neighbor[0] == destination:
-                        self.adjacency_list[origin][destination] = [destination, new_weight]
+                        index = neighbors.index(neighbor)
+                        self.adjacency_list.get(origin)[index] = (destination, new_weight)
                         self.sparse_matrix[origin, destination] = new_weight
 
     def get_flight_sit(self, flight:tuple):
@@ -125,9 +127,7 @@ class ServerData:
             self.flights[flight].sits -= 1
         if not self.flights[flight].sits:
             self.set_graph_edge_weight(flight[0], flight[1], 9999)
-            with ServerData.matrix_lock:
-                self.sparse_matrix[flight[0], flight[1], 9999]
-        
+    
     def search_route(self, match:str, destination:str):
         try:
             match_index = self.matches_and_destinations.index(match)
@@ -166,6 +166,15 @@ class ServerData:
     def parse_flights_to_str(self):
         return {f"{key}": value.to_string() for key, value in self.flights.items()}
 
+    def save_graph(self):
+        with ServerData.adjacency_lock:
+            with open(FilePathsManagement.ROUTES_DATA_FILE_PATH.value, 'w') as file:
+                dump(self.parse_flights_to_str(), file)
+        
+        with ServerData.flights_lock:
+            with open(FilePathsManagement.GRAPH_FILE_PATH.value, 'w') as file:
+                dump(self.adjacency_list, file)
+        
 
 class UsersData:
 
@@ -200,3 +209,4 @@ class UsersData:
         except ValueError:
             print(f'[SERVER] User email already exists.')
             return False
+
