@@ -6,9 +6,6 @@ from json import load, dump, dumps
 from threading import Lock
 
 class ClientHandler:
-    #Mutexes
-    
-    tickets_file_lock = Lock()
 
     def __init__(self, conn:socket = None, addr = None):  
         self.conn = conn
@@ -72,14 +69,12 @@ class ClientHandler:
         
 
         ticket = Ticket(self.__get_email(token), routes)
-        with ClientHandler.tickets_file_lock:
-            ticket.save()
+        ticket.save()
         
         return (ConstantsManagement.OK.value, ticket.to_json(), ConstantsManagement.TICKET_TYPE.value)
             
     def __get_email(self, token):
         users:dict = UsersData.load_users()
-
         for user, client_token in users.items():
             if client_token == token:
                 return user
@@ -87,7 +82,7 @@ class ClientHandler:
         
     def get_tickets(self, token):
         try:
-            with ClientHandler.tickets_file_lock:
+            with Ticket.tickets_file_lock:
                 with open(FilePathsManagement.TICKETS_FILE_PATH.value, 'r') as file:
                     all_tickets:dict = load(file)   
             email = self.__get_email(token)

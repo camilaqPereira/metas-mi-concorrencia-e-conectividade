@@ -75,6 +75,9 @@ class Response:
         self.status = response['status']
 
 class Ticket:
+    #Mutexes
+    tickets_file_lock = Lock()
+
     def __init__(self, email='', routes=None):
         self.email = email
         self.timestamp = datetime.datetime.now()
@@ -83,14 +86,15 @@ class Ticket:
     def save(self):
         data = {'timestamp': self.timestamp.strftime('%d/%m/%y %H:%M:%S'), 'routes': self.routes}
         try:
-            with open(FilePathsManagement.TICKETS_FILE_PATH.value, 'r+') as file:
-                all_tickets = json.load(file)
-                if self.email in all_tickets:
-                    all_tickets.get(self.email).append(data)
-                else:
-                    all_tickets[self.email] = [data]
-                file.seek(0)
-                json.dump(all_tickets, file)
+            with Ticket.tickets_file_lock:
+                with open(FilePathsManagement.TICKETS_FILE_PATH.value, 'r+') as file:
+                    all_tickets = json.load(file)
+                    if self.email in all_tickets:
+                        all_tickets.get(self.email).append(data)
+                    else:
+                        all_tickets[self.email] = [data]
+                    file.seek(0)
+                    json.dump(all_tickets, file)
             return True
         except FileNotFoundError:
             print(f'[SERVER] Error saving ticket! File not found')
