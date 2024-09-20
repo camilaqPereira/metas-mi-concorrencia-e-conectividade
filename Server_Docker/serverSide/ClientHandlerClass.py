@@ -55,7 +55,8 @@ class ClientHandler:
                 routes_keys.append(flight_key)
             except ValueError:
                 return (ConstantsManagement.OPERATION_FAILED.value, None, ConstantsManagement.NO_DATA_TYPE.value)
-            
+            except KeyError:
+                return (ConstantsManagement.OPERATION_FAILED.value, None, ConstantsManagement.NO_DATA_TYPE.value)
         for item in routes_keys:
             server_data.dec_flight_sits(item)
         
