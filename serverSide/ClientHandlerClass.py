@@ -1,10 +1,15 @@
 from hashlib import sha256
 from DB.utils import *
-from Server.requests import *
+from server.requests import *
 import socket
 from json import load, dump, dumps
+from threading import Lock
+import time
 
 class ClientHandler:
+    #Mutexes
+    users_file_lock = Lock()
+
     def __init__(self, conn:socket = None, addr = None):  
         self.conn = conn
         self.addr = addr
@@ -14,39 +19,43 @@ class ClientHandler:
     
     def __load_users(self):
         try:
-            #lock
-            with open(FilePathsManagement.USERS_FILE_PATH.value, 'r') as file:
-                users = load(file)
-            #unlock
+            with ClientHandler.users_file_lock:
+                print('Lock adquired!')
+                time.sleep(5)
+                with open(FilePathsManagement.USERS_FILE_PATH.value, 'r') as file:
+                    users = load(file)
         except FileNotFoundError:
             users = {}
         return users
     
     def __save_user(self, email, token):
         try:
-            #lock
-            users:dict = self.__load_users()
-            users[email] = token
-            with open(FilePathsManagement.USERS_FILE_PATH.value, 'w') as file:
-                dump(users, file)
-            #unlock
+            with ClientHandler.users_file_lock:
+                with open(FilePathsManagement.USERS_FILE_PATH.value, 'r+') as file:
+                    users:dict = load(file)
+                    if email in users:
+                        raise ValueError('User already exists!')
+                    else:
+                        file.seek(0)
+                        users[email] = token
+                        dump(users, file, indent=4)
             return True
         except FileNotFoundError:
-            print(f'[SERVER] Error saving created user {self.addr}')
+            print(f'[SERVER] Users file not found')
+            return False
+        except ValueError:
+            print(f'[SERVER] User email already exists.')
             return False
 
-    def create_user(self, email:str):
-        users:dict = self.__load_users()
 
-        if email.strip() and not (email in users):
-            token = self.__create_token(email)
-            created_status = self.__save_user(email, token)
-            if created_status:
-                return (ConstantsManagement.OK.value, token, ConstantsManagement.TOKEN_TYPE.value)
-            else:
-                return (ConstantsManagement.OPERATION_FAILED.value, None, ConstantsManagement.NO_DATA_TYPE.value)
+    def create_user(self, email:str):
+        token = self.__create_token(email)
+        created_status = self.__save_user(email, token)
+        if created_status:
+            return (ConstantsManagement.OK.value, token, ConstantsManagement.TOKEN_TYPE.value)
         else:
-           return (ConstantsManagement.OPERATION_FAILED.value, None, ConstantsManagement.NO_DATA_TYPE.value)
+            return (ConstantsManagement.OPERATION_FAILED.value, None, ConstantsManagement.NO_DATA_TYPE.value)
+        
 
     def get_token(self, email:str):
         users:dict = self.__load_users()
@@ -148,4 +157,3 @@ class ClientHandler:
             print(f"[SERVER] Package transfer to {self.addr} failed! {str(err)}\n")
             status = False
         return status
-
