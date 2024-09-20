@@ -2,24 +2,30 @@ from time import sleep
 from Client import requests
 from Client import utils
 from clientSide import menus
-import keyboard
 from Client import controller
 import os
 from Client.ClientSockClass import ClientSocket
 from sys import platform
 
-#checar o sistema que o codigo esta sendo rodado
 
 
+#checar o sistema operaciona em que o codigo esta sendo rodado
 if platform == 'linux' or platform == 'linux2' or platform == 'darwin':
     __CLEAR = 'clear'
 else:
     __CLEAR =  'cls'
 
+##@brief: Função responsavel pelas operações relacionadas a compra e tratamento de erros no momento da compra
+#  @param: client - ClientSocket, objeto do cliente que será usado para as operações de conexão com o servidor
 def buy_route(client: ClientSocket):
     os.system(__CLEAR)
     match = input('digite de onde voce esta saindo: ')
+    while match == '':
+        match = input('digite de onde voce esta saindo: ')
+    
     destination = input('digite para onde voce deseja ir: ')
+    while destination == '':
+        destination = input('digite para onde voce deseja ir: ')
 
     (status, data) = controller.search_routes(match=match, destination=destination, client=client)
 
@@ -156,7 +162,8 @@ def buy_route(client: ClientSocket):
         sleep(2)
         buy_route(client)
 
-
+##@brief: Função responsavel pelas operações relacionadas a busca de compras de um usuario e tratamento de erros
+# @param: client - ClientSocket, objeto do cliente que será usado para as operações de conexão com o servidor
 def seek_bougths(client: ClientSocket):
     color_list = ['\033[47;30m', '\033[49;0m']
     os.system(__CLEAR)
@@ -199,6 +206,8 @@ def seek_bougths(client: ClientSocket):
         sleep(2)
         main_loop()
 
+##@brief: Função responsavel pelas operações relacionadas ao status ok no menu
+# @param: client - ClientSocket, objeto do cliente que será usado para as operações de conexão com o servidor
 def submenu_status_ok(client: ClientSocket):
     opc = menus.enumerate_menu(['Comprar Passagem', 'Consultar Compras', 'Voltar'], 'selecione uma das opcoes abaixo:', __CLEAR)
     if opc == 0:
@@ -207,6 +216,10 @@ def submenu_status_ok(client: ClientSocket):
         seek_bougths(client)
     else:
         menu(client)
+
+##@brief: Função responsavel pelas operações relacionadas ao status de token invalido no menu
+# @param: client - ClientSocket, objeto do cliente que será usado para as operações de conexão com o servidor
+# @param: old_opc - int, ultima opção selecionada pelo usuario
 def submenu_status_token(client: ClientSocket, old_opc):
     color_list = ['\033[47;30m', '\033[49;0m']
     while True:
@@ -294,6 +307,9 @@ def submenu_status_token(client: ClientSocket, old_opc):
                         main_loop()
                 else:
                     exit(1)
+
+##@brief: Função responsavel pelas operações relacionadas a erros na momento de login no menu principal
+# @param: client - ClientSocket, objeto do cliente que será usado para as operações de conexão com o servidor
 def submenu_login(client: ClientSocket):
     opc = menus.enumerate_menu(['Fazer Login', 'Sair'], 'Selecione uma opcao:', __CLEAR)
 
@@ -324,6 +340,9 @@ def submenu_login(client: ClientSocket):
             main_loop()
     else:
         exit(1)
+
+##@brief: Função responsavel pelas operações relacionadas a erros na momento de criar conta no menu principal
+# @param: client - ClientSocket, objeto do cliente que será usado para as operações de conexão com o servidor
 def submenu_create_account(client: ClientSocket):
     opc = menus.ysno_menu('Deseja criar uma conta?', __CLEAR)
     if opc == 0:
@@ -353,6 +372,9 @@ def submenu_create_account(client: ClientSocket):
             main_loop()
     else:
         main_loop()
+
+##@brief: Função responsavel pelas operações relacionadas ao menu principal e tratamento de seus erros
+# @param: client - ClientSocket, objeto do cliente que será usado para as operações de conexão com o servidor
 def menu(client: ClientSocket):
     os.system(__CLEAR)
     while True:
@@ -396,7 +418,8 @@ def menu(client: ClientSocket):
             sleep(2)
             main_loop()
 
-
+##@brief: Função principal do programa, ao ser iniciado verifica se é possivel conexão com servidor, caso contrario encerra o programa
+# @param: client - ClientSocket, objeto do cliente que será usado para as operações de conexão com o servidor
 def main_loop():
     ip = input("Digite o IP do servidor: ")
 

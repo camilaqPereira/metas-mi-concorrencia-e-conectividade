@@ -2,14 +2,14 @@ from Client import requests
 from Client.ClientSockClass import *
 from Client import utils
 
-
-MAX_SIZE_TRANSFER = 64
-ENCOD = 'utf-8'
-FAIL_CONNEXION = "erro de conexao"
+##@brief: constante de texto retornado quando o usuario não estiver conectado
 TOKEN_NOT_DEFINED = "Usuario nao conectado"
 
-
-def send_request(request, client:ClientSocket):
+##@brief:   Função responsavel por realizar o envio dos request para o servidor e retornar  a resposta
+#  @param:  request - json, contendo a requesição a ser enviada ao servidor
+#  @param:  client - ClientSocket, objeto do cliente que será usado para enviar a requisição
+#  @return:  Retorna um json contendo a resposta do servidor 
+def send_request(request: str, client:ClientSocket):
 
     if client.connect():
         size_transfer = str(len(request)).encode(requests.ConstantsManagement.FORMAT.value)
@@ -32,10 +32,13 @@ def send_request(request, client:ClientSocket):
         response = requests.Response()
     return response
 
-
-def buying(routes, client:ClientSocket):
+##@brief:   Função responsavel por realizar o request da compra realizada e retornar a resposta do servidor
+#  @param:  routes - list[Route], lista das rotas escolhidas pelo cliente
+#  @param:  client - ClientSocket, objeto do cliente que será usado para enviar a requisição
+#  @return:  Retorna uma tupla onde o primerio elemento é o status da requisição e o segundo os dados retornados pelo servidor
+def buying(routes: list, client:ClientSocket):
     if client.token == '':
-        return  0, TOKEN_NOT_DEFINED
+        return  requests.ConstantsManagement.INVALID_TOKEN.value, TOKEN_NOT_DEFINED
 
     buy_request = requests.Request(client_token=client.token, rq_data=[], rq_type=requests.ConstantsManagement.BUY.value)
 
@@ -48,28 +51,43 @@ def buying(routes, client:ClientSocket):
 
     return response.status, response.data
 
-def connect(email, client:ClientSocket):
+##@brief:   Função responsavel por realizar o request do token do usuario ao tentar logar e retornar a resposta do servidor
+#  @param:  email - str, email do cliente
+#  @param:  client - ClientSocket, objeto do cliente que será usado para enviar a requisição
+#  @return:  Retorna uma tupla onde o primerio elemento é o status da requisição e o segundo os dados retornados pelo servidor
+def connect(email: str, client:ClientSocket):
     connect_request = requests.Request(rq_data=email, rq_type=requests.ConstantsManagement.GETTOKEN.value)
     response = send_request(connect_request.to_json(), client)
 
     return response.status, response.data
 
 
-def search_routes(match, destination, client:ClientSocket):
+##@brief:   Função responsavel por realizar o request das rotas disponiveis, saindo e indo para onde o usuario escolheu, e retornar a resposta do servidor
+#  @param:  match - str, local que o cliente está saindo
+#  @param:  destination - str, local para onde o cliente deseja ir
+#  @param:  client - ClientSocket, objeto do cliente que será usado para enviar a requisição
+#  @return:  Retorna uma tupla onde o primerio elemento é o status da requisição e o segundo os dados retornados pelo servidor
+def search_routes(match:  str, destination: str, client:ClientSocket):
     route_request = requests.Request(client_token=client.token, rq_type=requests.ConstantsManagement.GETROUTES.value, rq_data={'match':match, 'destination':destination})
     response = send_request(route_request.to_json(), client)
     return response.status, response.data
 
-
-def create_account(email, client:ClientSocket):
+##@brief:   Função responsavel por realizar o request para a criação de conta do usuario, gerar o token e retornar a resposta do servidor
+#  @param:  email - str, email do cliente
+#  @param:  client - ClientSocket, objeto do cliente que será usado para enviar a requisição
+#  @return:  Retorna uma tupla onde o primerio elemento é o status da requisição e o segundo os dados retornados pelo servidor
+def create_account(email: str, client:ClientSocket):
     create_account_request = requests.Request(rq_type=requests.ConstantsManagement.CREATE_USER.value, rq_data=email)
     response = send_request(create_account_request.to_json(), client)
 
     return response.status, response.data
 
+##@brief:   Função responsavel por realizar o request das comprar ja feitas por um usuario e retornar a resposta do servidor
+#  @param:  client - ClientSocket, objeto do cliente que será usado para enviar a requisição
+#  @return:  Retorna uma tupla onde o primerio elemento é o status da requisição e o segundo os dados retornados pelo servidor
 def search_bougths(client:ClientSocket):
     if client.token == '':
-        return  0, TOKEN_NOT_DEFINED
+        return  requests.ConstantsManagement.INVALID_TOKEN.value, TOKEN_NOT_DEFINED
 
     bougths_request = requests.Request(client_token=client.token, rq_data=[], rq_type=requests.ConstantsManagement.GETTICKETS.value)
 
