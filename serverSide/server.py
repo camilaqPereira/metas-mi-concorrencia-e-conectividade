@@ -1,6 +1,6 @@
 from serverSide.ClientHandlerClass import *
 from serverSide.ServerClass import *
-from Server.requests import ConstantsManagement
+from server.requests import ConstantsManagement
 from DB.utils import ServerData
 from threading import Thread, Lock
 
