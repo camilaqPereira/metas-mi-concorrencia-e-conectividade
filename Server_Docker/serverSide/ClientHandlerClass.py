@@ -65,7 +65,10 @@ class ClientHandler:
     
     def auth_token(self, token = None):
         users:dict = self.__load_users()
-        return True if (token in users.values()) else False
+        if token and (token in users.values()):
+            return True
+        else:
+            return False
 
     def find_routes(self, server_data: ServerData, match:str, destination:str):
             found_routes = server_data.search_route(match, destination)
