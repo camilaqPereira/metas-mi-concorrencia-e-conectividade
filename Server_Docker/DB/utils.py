@@ -167,3 +167,36 @@ class ServerData:
         return {f"{key}": value.to_string() for key, value in self.flights.items()}
 
 
+class UsersData:
+
+    users_file_lock = Lock()
+
+    @classmethod
+    def load_users(cls):
+        try:
+            with cls.users_file_lock:
+                with open(FilePathsManagement.USERS_FILE_PATH.value, 'r') as file:
+                    users = load(file)
+        except FileNotFoundError:
+            users = {}
+        return users
+    
+    @classmethod
+    def save_user(cls, email, token):
+        try:
+            with cls.users_file_lock:
+                with open(FilePathsManagement.USERS_FILE_PATH.value, 'r+') as file:
+                    users:dict = load(file)
+                    if email in users:
+                        raise ValueError('User already exists!')
+                    else:
+                        file.seek(0)
+                        users[email] = token
+                        dump(users, file, indent=4)
+            return True
+        except FileNotFoundError:
+            print(f'[SERVER] Users file not found!')
+            return False
+        except ValueError:
+            print(f'[SERVER] User email already exists.')
+            return False
