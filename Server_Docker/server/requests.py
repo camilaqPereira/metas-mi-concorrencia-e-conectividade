@@ -99,11 +99,16 @@ class Ticket:
 ##
     @classmethod
     def load_tickets(cls):
-        with Ticket.tickets_file_lock:
-            with open(FilePathsManagement.TICKETS_FILE_PATH.value, 'r') as file:
-                all_tickets:dict = load(file)
-        return all_tickets
-        
+        try:
+            with Ticket.tickets_file_lock:
+                with open(FilePathsManagement.TICKETS_FILE_PATH.value, 'r') as file:
+                    all_tickets:dict = load(file)
+            
+            return all_tickets
+        except FileNotFoundError:
+            print(f'[SERVER] Could not find tickets file')
+            raise
+##
 #   @brief: Realiza a adição da instância ao arquivo de tickets
 #
 #   @return: True se a operação foi concluida. Caso contrário False
