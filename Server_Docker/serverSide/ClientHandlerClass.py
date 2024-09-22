@@ -10,12 +10,8 @@ class ClientHandler:
         self.conn = conn
         self.addr = addr
     
-    def __create_token(self, email):
-        return sha256(email.encode(ConstantsManagement.FORMAT.value)).hexdigest()
-
-
     def create_user(self, email:str):
-        token = self.__create_token(email)
+        token = sha256(email.encode(ConstantsManagement.FORMAT.value)).hexdigest()
         created_status = UsersData.save_user(email, token)
         if created_status:
             return (ConstantsManagement.OK.value, token, ConstantsManagement.TOKEN_TYPE.value)
