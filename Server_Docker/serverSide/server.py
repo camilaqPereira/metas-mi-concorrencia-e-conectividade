@@ -2,9 +2,10 @@ from serverSide.ClientHandlerClass import *
 from serverSide.ServerClass import *
 from server.requests import ConstantsManagement as cm
 from DB.utils import ServerData
-from threading import Thread, Lock
+from concurrent.futures import ThreadPoolExecutor
 
 def process_client(client:ClientHandler, server_data: ServerData):   
+    print(f'init {client.addr}')
 
     try:
         request:Request = client.receive_pkt()
@@ -79,6 +80,7 @@ def process_client(client:ClientHandler, server_data: ServerData):
 
     response.status = response.status.value
     response.rs_type = response.rs_type.value
+    
     client.send_pkt(response)
     client.conn.close()
     Server.remove_client(client)
@@ -88,8 +90,6 @@ def process_client(client:ClientHandler, server_data: ServerData):
 def main(server_port):
     #Inicialização dos dados do servidor
     server_data = ServerData()
-    #Inicialização do mutex -> backlog de usuários 
-    backlog_lock = Lock()
     #Inicialização do socket
     server = Server()
 
@@ -97,16 +97,17 @@ def main(server_port):
         exit(-1)
 
     #Gerenciando conexões
-    while True:
-        try:
-            (conn, client) = server.server_socket.accept()
-            new_client = ClientHandler(conn, client)
+    with ThreadPoolExecutor(max_workers=10) as exec:
+        while True:
+            try:
+                (conn, client) = server.server_socket.accept()
+                new_client = ClientHandler(conn, client)
                 Server.add_client(new_client)
-            thread = Thread(target=process_client, args=(new_client,server_data, backlog_lock))
-            thread.start()
-        except socket.error as er:
-            print(f"[SERVER] Error accepting new connection. Error: {er} Retrying...\n")
-
+                exec.submit(process_client, new_client,server_data)
+            except socket.error as er:
+                print(f"[SERVER] Error accepting new connection. Error: {er} Retrying...\n")
+            except KeyboardInterrupt:
+                exit(-1)
 
 
 # Select port #
