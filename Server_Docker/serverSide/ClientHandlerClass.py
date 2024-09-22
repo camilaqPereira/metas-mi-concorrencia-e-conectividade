@@ -2,7 +2,7 @@ from hashlib import sha256
 from DB.utils import *
 from server.requests import *
 import socket
-from serverSide.customExceptions import InvalidTokenException, ClientNotFoundException
+from serverSide.customExceptions import InvalidTokenException
 
 ##
 #   @brief: Classe utilizada para gerenciar as requisições dos clientes
@@ -31,16 +31,12 @@ class ClientHandler:
     def get_token(self, email:str):
         try:
 
-            users:dict = UsersData.load_users()
-            token = users.get(email)
-            if token:
-                return token
-            else:
-                raise ClientNotFoundException('Client not found')
+            users:dict[str,str] = UsersData.load_users()
+            return users[email]
         
-        except FileExistsError:
+        except FileNotFoundError:
            raise
-        except ClientNotFoundException:
+        except KeyError:
             print(f'[SERVER] {self.addr} Client not registered')
             raise 
     
@@ -83,7 +79,7 @@ class ClientHandler:
                 return None
         except FileNotFoundError:
             raise
-        except ClientNotFoundException:
+        except InvalidTokenException:
             raise
         
 ##
@@ -100,10 +96,10 @@ class ClientHandler:
                 if client_token == token:
                     return user
             
-            raise(ClientNotFoundException('Client not found'))
+            raise InvalidTokenException('Client not found')
         except FileNotFoundError:
             raise
-        except ClientNotFoundException:
+        except InvalidTokenException:
             print(f'[SERVER] {self.addr} Client not found')
             raise
 
@@ -120,31 +116,31 @@ class ClientHandler:
             all_tickets:dict = Ticket.load_tickets()
             return all_tickets.get(email)
 
-        except (ClientNotFoundException, FileNotFoundError):
+        except (InvalidTokenException, FileNotFoundError):
             raise
 
     ##
     #   @brief: Realiza o recebimento de pacotes do cliente
-    #
-    #   @raises: OSError caso ocorra uma falha na conexão
+    #   @return: Objeto do tipo Request com os dados da rquisição do cliente
+    #   @raises: socket.error caso ocorra uma falha na conexão
     ##
     def receive_pkt(self):
-        pkt = Request()
         try:
+            pkt = Request()
             pkt_size = self.conn.recv(ConstantsManagement.MAX_PKT_SIZE.value).decode(ConstantsManagement.FORMAT.value)
             if pkt_size:
                 pkt_size = int(pkt_size)
                 #recebendo segundo pacote -> requisição
                 pkt.from_json(self.conn.recv(pkt_size).decode(ConstantsManagement.FORMAT.value))
+            return pkt
         except socket.error as err:
             print(f"[SERVER] Package reception from {self.addr} failed! {str(err)}\n")
-            pkt = None
-        return pkt
+            raise
     
     ##
     #   @brief: Realiza o envio de pacotes do cliente
     #
-    #   @raises: OSError caso ocorra uma falha na conexão
+    #   @raises: socket.error caso ocorra uma falha na conexão
     ##
     def send_pkt(self, pkt:Response):
         pkt_json = pkt.to_json()
@@ -158,4 +154,5 @@ class ClientHandler:
             print(f"[SERVER] Package transfer to {self.addr} failed! {str(err)}\n")
             status = False
         return status
+    
     
