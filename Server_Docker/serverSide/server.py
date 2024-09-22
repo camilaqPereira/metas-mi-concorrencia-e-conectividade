@@ -1,60 +1,113 @@
 from serverSide.ClientHandlerClass import *
 from serverSide.ServerClass import *
-from server.requests import ConstantsManagement
+from server.requests import ConstantsManagement as cm
 from DB.utils import ServerData
 from threading import Thread, Lock
 
-backlog_lock = Lock()
+def process_client(client:ClientHandler, server_data: ServerData, backlog_lock:Lock):   
+    failed = False
 
-def process_client(client:ClientHandler, server_data: ServerData):   
-    request = client.receive_pkt()
-    if not request:
-        return_data = (ConstantsManagement.NETWORK_ERROR.value, None, ConstantsManagement.NO_DATA_TYPE.value)
-    elif request.rq_type == ConstantsManagement.CREATE_USER.value:
-        return_data = client.create_user(request.rq_data)
-    elif request.rq_type == ConstantsManagement.GETTOKEN.value:
-        return_data = client.get_token(request.rq_data)
-    elif request.rq_type == ConstantsManagement.GETROUTES.value:
-        if client.auth_token(token=request.client_token):
-            return_data = client.find_routes(server_data, request.rq_data['match'], request.rq_data['destination'])
-        else:
-            return_data = (ConstantsManagement.INVALID_TOKEN.value, None, ConstantsManagement.NO_DATA_TYPE.value)
-    elif request.rq_type == ConstantsManagement.BUY.value:
-        if client.auth_token(token=request.client_token):
-            return_data = client.buy_routes(server_data, request.client_token, request.rq_data)
-        else:
-            return_data = (ConstantsManagement.INVALID_TOKEN.value, None, ConstantsManagement.NO_DATA_TYPE.value)
-    elif request.rq_type == ConstantsManagement.GETTICKETS.value:
-        if client.auth_token(token=request.client_token):
-            return_data = client.get_tickets(request.client_token)
-        else:
-            return_data = (ConstantsManagement.INVALID_TOKEN.value, None, ConstantsManagement.NO_DATA_TYPE.value)
-    else:
-        return_data = (ConstantsManagement.OPERATION_FAILED.value, None, ConstantsManagement.NO_DATA_TYPE.value)
+    try:
+        request:Request = client.receive_pkt()
+        response:Response = Response()
+        type = cm(request.rq_type).name
 
-    client.send_pkt(return_data)
+        if type != "CREATE_USER" and type != "GETTOKEN":
+            client.auth_token(request.client_token)
+        
+        match type:
+            case "CREATE_USER":
+                response.data = client.create_user(request.rq_data) # type: ignore
+                if response.data:
+                    response.status = cm.OK
+                    response.rs_type = cm.TOKEN_TYPE
+                else:
+                    response.status = cm.OPERATION_FAILED
+                    response.rs_type = cm.NO_DATA_TYPE
+            case "GETTOKEN":
+                response.data = client.get_token(request.rq_data) # type: ignore
+                response.status = cm.OK
+                response.rs_type = cm.TOKEN_TYPE
+            
+            case "GETROUTES":
+                response.data = server_data.search_route(request.rq_data['match'], request.rq_data['destination']) # type: ignore
+
+                if response.data:
+                    response.status = cm.OK
+                    response.rs_type = cm.ROUTE_TYPE
+                else:
+                    response.status = cm.NOT_FOUND
+                    response.rs_type = cm.NO_DATA_TYPE
+            
+            case "BUY":
+                response.data = client.buy_routes(server_data, request.client_token, request.rq_data) # type: ignore
+
+                if response.data:
+                    response.status = cm.OK
+                    response.rs_type = cm.TICKET_TYPE
+                else:
+                    response.status = cm.OPERATION_FAILED
+                    response.rs_type = cm.NO_DATA_TYPE
+            
+            case "GETTICKETS":
+                response.data = client.get_tickets(request.client_token)
+
+                if response.data:
+                    response.status = cm.OK
+                    response.rs_type = cm.TICKET_TYPE
+                else:
+                    response.status = cm.NOT_FOUND
+                    response.rs_type = cm.NO_DATA_TYPE
+            
+            case _:
+                raise ValueError(f"[SERVER] {client.addr} No request type named {request.rq_type}")
+
+
+    except socket.error:
+        client.conn.close()
+        with backlog_lock:
+            Server.remove_client(client)
+        
+        return
+    
+    except InvalidTokenException:
+        response.status = cm.INVALID_TOKEN
+        response.data = None
+        response.rs_type = cm.NO_DATA_TYPE
+
+    except (KeyError, ValueError):
+        response.status = cm.NOT_FOUND
+        response.data = None
+        response.rs_type = cm.NO_DATA_TYPE
+
+    
+    client.send_pkt(response)
     client.conn.close()
-
     with backlog_lock:
         Server.remove_client(client)
 
 def main(server_port):
+    #Inicialização dos dados do servidor
     server_data = ServerData()
+    #Inicialização do mutex -> backlog de usuários 
+    backlog_lock = Lock()
+    #Inicialização do socket
     server = Server()
+
     if not server.init_socket(server_port):
         exit(-1)
-    
+
+    #Gerenciando conexões
     while True:
         try:
             (conn, client) = server.server_socket.accept()
             new_client = ClientHandler(conn, client)
             with backlog_lock:
                 Server.add_client(new_client)
-            thread = Thread(target=process_client, args=(new_client,server_data))
+            thread = Thread(target=process_client, args=(new_client,server_data, backlog_lock))
             thread.start()
         except socket.error as er:
-            print(f"[SERVER] Server isn't accepting new connections. Error: {str(er)} Exiting!\n")
-            return
+            print(f"[SERVER] Error accepting new connection. Error: {er} Retrying...\n")
 
 
 
