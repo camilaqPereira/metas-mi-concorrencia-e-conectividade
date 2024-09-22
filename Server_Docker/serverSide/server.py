@@ -5,7 +5,6 @@ from DB.utils import ServerData
 from concurrent.futures import ThreadPoolExecutor
 
 def process_client(client:ClientHandler, server_data: ServerData):   
-    print(f'init {client.addr}')
 
     try:
         request:Request = client.receive_pkt()
