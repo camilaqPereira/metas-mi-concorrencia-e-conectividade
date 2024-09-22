@@ -38,7 +38,7 @@ class ConstantsManagement(Enum):
 
 
 class Request:
-    def __init__(self, rq_type: str = '', rq_data = None, client_token:str = ''):
+    def __init__(self, rq_type: str = '', rq_data: any = None, client_token:str = ''):
         self.rq_type = rq_type
         self.rq_data = rq_data
         self.client_token = client_token
@@ -57,7 +57,7 @@ class Request:
 
 
 class Response:
-    def __init__(self, status:int= 0, data = None, rs_type:str= ''):
+    def __init__(self, status = 0, data = None, rs_type = ''):
         self.timestamp = datetime.datetime.now()
         self.status = status
         self.data = data
