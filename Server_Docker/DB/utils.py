@@ -16,16 +16,26 @@ class FilePathsManagement(Enum):
 
 class Route:
 
-    def __init__(self, match = '', destination = '', sits = 0, id = None):
+    def __init__(self, match:str = '', destination:str = '', sits:int = 0, id:str = ''):
         self.match = match
         self.destination = destination
         self.sits = sits
         self.id = id
 
-    def to_string(self):
-        return {'match': self.match, 'destination': self.destination, 'sits': self.sits, 'id': self.id}
+    def __repr__(self):
+        return f"Route('{self.match}', '{self.destination}',{self.sits}, '{self.id}')"
     
-    def from_string(self, data):
+##
+#   @brief: Método retorna um dict representativo da instância
+#   @return dict com todos os valores dos atributos da instância
+##
+    def as_dict(self):
+        return {'match': self.match, 'destination': self.destination, 'sits': self.sits, 'id': self.id}
+
+    ## 
+    #   @brief: Método utilizado para atualizar os atributos de instância de um objeto
+    ##
+    def from_dict(self, data):
         self.match = data['match']
         self.destination = data['destination']
         self.sits = data['sits']
@@ -38,20 +48,25 @@ class ServerData:
     adjacency_lock = Lock()
 
     def __init__(self):
-        self.adjacency_list = self.__init_adjacency_list()
-        self.sparse_matrix = self.__create_sparse_matrix()
-        self.matches_and_destinations = self.__init_matches_and_destinations()
-        self.flights = self.__init_flights()
+        self.adjacency_list:dict[int, list[tuple[int,int]]] = self.__init_adjacency_list()
+        self.sparse_matrix:csr_matrix = self.__create_sparse_matrix()
+        self.matches_and_destinations:list[str] = self.__init_matches_and_destinations()
+        self.flights:dict[tuple[int,int], Route] = self.__init_flights()
         self.__init_database()
 
     def __init_database(self):
-        if not os.path.exists(FilePathsManagement.USERS_FILE_PATH.value):
-            with open(FilePathsManagement.USERS_FILE_PATH.value, 'x') as file:
-                dump({}, file)
-        if not os.path.exists(FilePathsManagement.TICKETS_FILE_PATH.value):
-            with open(FilePathsManagement.TICKETS_FILE_PATH.value, 'x') as file:
-                dump({}, file)
-
+        try:
+            if not os.path.exists(FilePathsManagement.USERS_FILE_PATH.value):
+                with open(FilePathsManagement.USERS_FILE_PATH.value, 'x') as file: #criando arquivo de usuários
+                    dump({}, file)
+            
+            if not os.path.exists(FilePathsManagement.TICKETS_FILE_PATH.value):
+                with open(FilePathsManagement.TICKETS_FILE_PATH.value, 'x') as file: #criando arquivo de tickets
+                    dump({}, file)
+        
+        except OSError as e:
+            print(f'[SERVER] Could not init properly the users and tickets files. {e}')
+            raise
 
     def __parse_to_dict(self, item):
         loaded_dict = {int(key): value for key, value in item}
@@ -89,50 +104,78 @@ class ServerData:
     def __init_flights(self):
         try:
             with open(FilePathsManagement.ROUTES_DATA_FILE_PATH.value, 'r') as flights_file:
-                data = load(flights_file)
-            flights = {}
-            for key, value in data.items():
-                flights[eval(key)] = Route(match=value['match'], destination=value['destination'], sits=value['sits'], id=value['id'])
+                flights = load(flights_file, object_pairs_hook=self.__parse_flights_json)
+            
         except FileNotFoundError:
-            flights = {}
+            pass
+        
         return flights
-    
-    def add_graph_node(self, node:int):
-        with ServerData.adjacency_lock:
-            if node not in self.adjacency_list:
-                self.adjacency_list[node] = []
-    
-    def add_graph_edge(self, origin:int, destination:int, weight:int):
-        self.add_graph_node(origin)
-        self.add_graph_node(destination)
-        with ServerData.adjacency_lock:
-            self.adjacency_list[origin].append((destination, weight))
-    
-    def set_graph_edge_weight(self, origin:int, destination:int, new_weight:int):
-        with ServerData.adjacency_lock, ServerData.matrix_lock: 
-            if origin in self.adjacency_list:
-                neighbors = self.adjacency_list.get(origin)
-                for neighbor in neighbors:
-                    if neighbor[0] == destination:
-                        index = neighbors.index(neighbor)
-                        self.adjacency_list.get(origin)[index] = (destination, new_weight)
-                        self.sparse_matrix[origin, destination] = new_weight
 
-    def get_flight_sit(self, flight:tuple):
+    def __parse_flights_json(self, item):
+        return {eval(key): eval(value) for key, value in item}
+    def __set_graph_edge_weight(self, origin:int, destination:int, new_weight:int):
         try:
-            with ServerData.flights_lock:
-                sits = self.flights[flight].sits
-            return sits
-        except KeyError:
-            raise KeyError
-    def dec_flight_sits(self, flight:tuple):
+            neighbors = self.adjacency_list[origin]
+            for neighbor in neighbors:
+
+                if neighbor[0] == destination:
+                    index = neighbors.index(neighbor)
+                    self.adjacency_list[origin][index] = (destination, new_weight)
+                    
+                    with ServerData.matrix_lock:
+                        self.sparse_matrix[origin, destination] = new_weight
+                    return
+            raise ValueError('Origin and destination are not adjacent')           
+        except KeyError as err1:
+            print(f'[SERVER] Match is not a key in adjacency list {err1}')
+            raise
+        except ValueError as err2:
+            print(f'[SERVER] Could not update weight. {err2}')
+            raise
+
+    def dec_all_routes(self, routes:list[tuple[str,str]]):
         with ServerData.flights_lock:
-            self.flights[flight].sits -= 1
-        if not self.flights[flight].sits:
-            self.set_graph_edge_weight(flight[0], flight[1], 9999)
-    
+            routes_keys = []
+            # Verificando a disponibilidade das rotas
+            for route in routes: 
+                try:
+                    flight_key = (self.matches_and_destinations.index(route[0]), self.matches_and_destinations.index(route[1]))
+                    if not self.flights[flight_key].sits:
+                        return False
+                    routes_keys.append(flight_key)
+                
+                except ValueError as err:
+                    print(f'[SERVER] Could not find node. {err}')
+                    return False
+                
+                except KeyError as err2:
+                    print(f'[SERVER] Could not find route. {err2} ')
+                    return False
+            #Decrementando os assentos
+            for route in routes_keys:
+                self.flights[route].sits -= 1
+
+                #Atualizando o grafo e a matrix caso número de assentos zere
+                if not self.flights[route].sits:
+                    self.__set_graph_edge_weight(route[0], route[1], 9999)
+           
+            #Atualizando arquivo de trechos
+            with open(FilePathsManagement.ROUTES_DATA_FILE_PATH.value, 'w') as file:
+                serialized = {str(key): repr(value) for key, value in self.flights.items()}
+                dump(serialized, file, indent=4)
+       
+        #Atualizando arquivo da lista de adjacência
+        with ServerData.adjacency_lock:
+            with open(FilePathsManagement.GRAPH_FILE_PATH.value, 'w') as file:
+                dump(self.adjacency_list, file, indent=4)
+        
+        return True
+
     def search_route(self, match:str, destination:str):
         try:
+            if match == destination: #verificando se os nós são iguais
+                raise ValueError()
+            
             match_index = self.matches_and_destinations.index(match)
             destination_index = self.matches_and_destinations.index(destination)
         except ValueError:
@@ -141,43 +184,40 @@ class ServerData:
         with ServerData.matrix_lock:
             shortest_paths, predecessors_mtx = csgraph.yen(self.sparse_matrix, source = match_index, sink = destination_index, K=3, return_predecessors=True)
 
-        paths = []
-        for i in range(len(shortest_paths)):
-            if(shortest_paths[i] > 9999): #checando por rotas esgotadas
-                continue
-            
-            new_path = []
-            current_node = destination_index
-            while current_node != match_index:
-                new_path.append(int(current_node))
-                current_node = predecessors_mtx[i,current_node]
-            new_path.append(match_index)
-            new_path.reverse()
-            paths.append(new_path)
-        return self.__convert_paths(paths)
-    
-    def __convert_paths(self, paths:list):
+        if shortest_paths.size:
+            paths = []
+            for i in range(len(shortest_paths)):
+                if(shortest_paths[i] > 9999): #checando por rotas esgotadas
+                    continue
+                
+                new_path = []
+                current_node = destination_index
+                while current_node != match_index:
+                    new_path.append(int(current_node))
+                    current_node = predecessors_mtx[i,current_node]
+                new_path.append(match_index)
+                new_path.reverse()
+                paths.append(new_path)
+            return self.__convert_paths(paths)
+        
+        return None
+
+##
+#   @brief: Método busca as informações da lista de trechos passadas como parâmetros
+#
+#   @param paths: lista contendo os trechos  serem buscados
+#   @return: lista contendo as informaões das rotas/voos
+## 
+    def __convert_paths(self, paths:list[list[int]]):
         routes = []
         with ServerData.flights_lock:
             for i in range(len(paths)):
                 routes.append([])
                 for j in range(len(paths[i])-1):
                     key = (paths[i][j], paths[i][j+1])
-                    routes[i].append(self.flights.get(key).to_string())
+                    routes[i].append(self.flights[key].as_dict())
         return routes
-    
-    def parse_flights_to_str(self):
-        return {f"{key}": value.to_string() for key, value in self.flights.items()}
 
-    def save_graph(self):
-        with ServerData.adjacency_lock:
-            with open(FilePathsManagement.ROUTES_DATA_FILE_PATH.value, 'w') as file:
-                dump(self.parse_flights_to_str(), file)
-        
-        with ServerData.flights_lock:
-            with open(FilePathsManagement.GRAPH_FILE_PATH.value, 'w') as file:
-                dump(self.adjacency_list, file)
-        
 
 class UsersData:
 
@@ -190,8 +230,7 @@ class UsersData:
                 with open(FilePathsManagement.USERS_FILE_PATH.value, 'r') as file:
                     users = load(file)
         except FileNotFoundError:
-            users = {}
-        return users
+            raise
     
     @classmethod
     def save_user(cls, email, token):
