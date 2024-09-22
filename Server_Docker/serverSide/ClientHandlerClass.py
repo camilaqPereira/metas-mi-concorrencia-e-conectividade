@@ -4,17 +4,30 @@ from server.requests import *
 import socket
 from serverSide.customExceptions import InvalidTokenException, ClientNotFoundException
 
+##
+#   @brief: Classe utilizada para gerenciar as requisições dos clientes
+##
 class ClientHandler:
 
     def __init__(self, conn, addr):  
         self.conn = conn
         self.addr = addr
     
+    ##
+    #   @brief: Cria um novo usuário no sistema 
+    #   @return: token do novo usuário ou None caso a operação tenha falhado
+    ##
     def create_user(self, email:str):
         token = sha256(email.encode(ConstantsManagement.FORMAT.value)).hexdigest()
         created_status = UsersData.save_user(email, token)
         return token if created_status else None
 
+    ##
+    #   @brief: Busca o token de um usuário no sistema 
+    #   @return: token do usuário (str)
+    #   @raises: FileNotFound caso o arquivo de usuários não seja encontrado
+    #            KeyError caso o usuário não esteja cadastrado no sistema
+    ##
     def get_token(self, email:str):
         try:
 
@@ -31,6 +44,13 @@ class ClientHandler:
             print(f'[SERVER] {self.addr} Client not registered')
             raise 
     
+##
+#   @brief: Autentica o token passado como argumento
+#   @param: token - chave a ser autenticada
+#   @raises: FileNotFound caso o arquivo de usuários não seja encontrado
+#            InvalidToken caso o token não pertença a um usuário
+##
+
     def auth_token(self, token = None):
         try:
             users:dict = UsersData.load_users()
@@ -43,6 +63,14 @@ class ClientHandler:
             print(f'[SERVER] {self.addr} Invalid token')
             raise
 
+##
+#   @brief: Realiza a operação de compra de da lista de voos passadas
+#   @param: server_data - objeto do tipo ServerData
+#   @param: token - chave autenticada
+#   @param: routes - lista de voos a serem comprados
+#   @raises: FileNotFound caso o arquivo de usuários não seja encontrado
+#            
+##
 
     def buy_routes(self, server_data:ServerData, token:str, routes:list[tuple[str,str]]):
         try:
@@ -58,6 +86,12 @@ class ClientHandler:
         except ClientNotFoundException:
             raise
         
+##
+#   @brief: Realiza a busca do email do cliente por meio do token
+#   @param: token - chave de busca autenticada
+#
+#   @raises: FileNotFound caso o arquivo de usuários não seja encontrado 
+##
             
     def __get_email(self, token:str):
         try:
@@ -73,6 +107,12 @@ class ClientHandler:
             print(f'[SERVER] {self.addr} Client not found')
             raise
 
+    ##
+    #   @brief: Realiza a busca de todos os tickets já emitidos a um cliente
+    #   @param: token - chave de busca autenticada
+    #
+    #   @raises: FileNotFound caso o arquivo de usuários não seja encontrado 
+    ##
         
     def get_tickets(self, token:str):
         try:
@@ -83,6 +123,11 @@ class ClientHandler:
         except (ClientNotFoundException, FileNotFoundError):
             raise
 
+    ##
+    #   @brief: Realiza o recebimento de pacotes do cliente
+    #
+    #   @raises: OSError caso ocorra uma falha na conexão
+    ##
     def receive_pkt(self):
         pkt = Request()
         try:
