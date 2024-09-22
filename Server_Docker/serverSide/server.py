@@ -80,7 +80,8 @@ def process_client(client:ClientHandler, server_data: ServerData, backlog_lock:L
         response.data = None
         response.rs_type = cm.NO_DATA_TYPE
 
-    
+    response.status = response.status.value
+    response.rs_type = response.rs_type.value
     client.send_pkt(response)
     client.conn.close()
     with backlog_lock:
