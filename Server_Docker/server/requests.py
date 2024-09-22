@@ -122,7 +122,7 @@ class Ticket:
                 with open(FilePathsManagement.TICKETS_FILE_PATH.value, 'r+') as file:
                     all_tickets:dict[str,list] = json.load(file)
                     if self.email in all_tickets:
-                        all_tickets.get(self.email).append(data)
+                        all_tickets[self.email].append(data)
                     else:
                         all_tickets[self.email] = [data]
                     file.seek(0)
@@ -133,9 +133,11 @@ class Ticket:
             return False
         except json.JSONDecodeError:
             print(f'[SERVER] Error saving ticket! Tickets json file empty or invalid')
+            return False
+        except KeyError:
+            print(f'[SERVER] Client not fount')
+            return False
 
-    def from_json(self, json_str):
-        values = json.loads(json_str)
 ##
 #   @brief: Realiza atualização dos atributos da instância por meio dos valores passados no dict
 #
