@@ -4,8 +4,7 @@ from server.requests import ConstantsManagement as cm
 from DB.utils import ServerData
 from threading import Thread, Lock
 
-def process_client(client:ClientHandler, server_data: ServerData, backlog_lock:Lock):   
-    failed = False
+def process_client(client:ClientHandler, server_data: ServerData):   
 
     try:
         request:Request = client.receive_pkt()
@@ -65,9 +64,7 @@ def process_client(client:ClientHandler, server_data: ServerData, backlog_lock:L
 
     except socket.error:
         client.conn.close()
-        with backlog_lock:
-            Server.remove_client(client)
-        
+        Server.remove_client(client)
         return
     
     except InvalidTokenException:
@@ -84,8 +81,9 @@ def process_client(client:ClientHandler, server_data: ServerData, backlog_lock:L
     response.rs_type = response.rs_type.value
     client.send_pkt(response)
     client.conn.close()
-    with backlog_lock:
-        Server.remove_client(client)
+    Server.remove_client(client)
+    
+    return
 
 def main(server_port):
     #Inicialização dos dados do servidor
@@ -103,7 +101,6 @@ def main(server_port):
         try:
             (conn, client) = server.server_socket.accept()
             new_client = ClientHandler(conn, client)
-            with backlog_lock:
                 Server.add_client(new_client)
             thread = Thread(target=process_client, args=(new_client,server_data, backlog_lock))
             thread.start()

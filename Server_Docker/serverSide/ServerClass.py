@@ -1,9 +1,12 @@
 from server.requests import ConstantsManagement
+from serverSide.ClientHandlerClass import ClientHandler
 import socket
+from threading import Lock
 
 class Server:
     _instance = None
-    backlog_clients = []
+    backlog_clients:list[ClientHandler] = []
+    backlog_lock = Lock()
 
     def __new__(cls):
         if not cls._instance:
@@ -33,12 +36,14 @@ class Server:
         return status
     
     @classmethod
-    def add_client(cls, client):
-        cls.backlog_clients.append(client)
+    def add_client(cls, client:ClientHandler):
+        with cls.backlog_lock:
+            cls.backlog_clients.append(client)
 
     @classmethod
-    def remove_client(cls, client):
-        cls.backlog_clients.remove(client)
+    def remove_client(cls, client:ClientHandler):
+        with cls.backlog_clients:
+            cls.backlog_clients.remove(client)
 
 
        
