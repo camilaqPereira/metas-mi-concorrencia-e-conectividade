@@ -74,7 +74,7 @@ class ClientHandler:
             if server_data.dec_all_routes(routes):
                 ticket = Ticket(email, routes)
                 ticket.save()
-                return ticket
+                return ticket.to_json()
             else:
                 return None
         except FileNotFoundError:
