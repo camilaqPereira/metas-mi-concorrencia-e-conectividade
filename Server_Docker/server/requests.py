@@ -4,6 +4,10 @@ import json
 import datetime
 from DB.utils import *
 
+
+##
+#   @brief: Classe usada para o gerenciamento de constantes do protocolo
+##
 class ConstantsManagement(Enum):
     # Métodos de requisições
     BUY = "BUY"
@@ -26,7 +30,7 @@ class ConstantsManagement(Enum):
     NOT_FOUND = 260
     NETWORK_ERROR = 280
 
-    #Conection infos
+    #Connection infos
     FORMAT = "utf-8" 
     MAX_PKT_SIZE = 64 #tamanho fixo do primeiro pacote em bytes
     DEFAULT_PORT = 8000
@@ -34,7 +38,7 @@ class ConstantsManagement(Enum):
 
 
 class Request:
-    def __init__(self, rq_type: str = '', rq_data: any = None, client_token:str = ''):
+    def __init__(self, rq_type: str = '', rq_data = None, client_token:str = ''):
         self.rq_type = rq_type
         self.rq_data = rq_data
         self.client_token = client_token
@@ -53,7 +57,7 @@ class Request:
 
 
 class Response:
-    def __init__(self, status = 0, data = None, rs_type = ''):
+    def __init__(self, status:int= 0, data = None, rs_type:str= ''):
         self.timestamp = datetime.datetime.now()
         self.status = status
         self.data = data
@@ -74,30 +78,51 @@ class Response:
         self.timestamp = datetime.datetime.strptime(response['timestamp'], '%d/%m/%Y %H:%M:%S')
         self.status = response['status']
 
+
+##
+#   @brief: Classe utilizada para armazenar o gerenciamento de passagens/tickets
+##
 class Ticket:
-    #Mutexes
+    #Mutex para acessar o arquivo de tickets
     tickets_file_lock = Lock()
 
-    def __init__(self, email='', routes=None):
+    def __init__(self, email:str='', routes = []):
         self.email = email
-        self.timestamp = datetime.datetime.now()
+        self.timestamp:datetime.datetime = datetime.datetime.now()
         self.routes = routes
 
+##
+#   @brief: Realiza a leitura do arquivo de tickets
+#
+#   @return: dict carregado do arquivo json
+#   @raises: FileNotFound caso o arquivo não seja encontrado 
+##
     @classmethod
     def load_tickets(cls):
-        with Ticket.tickets_file_lock:
-            with open(FilePathsManagement.TICKETS_FILE_PATH.value, 'r') as file:
-                all_tickets:dict = load(file)
-        return all_tickets
-        
+        try:
+            with Ticket.tickets_file_lock:
+                with open(FilePathsManagement.TICKETS_FILE_PATH.value, 'r') as file:
+                    all_tickets:dict = load(file)
+            
+            return all_tickets
+        except FileNotFoundError:
+            print(f'[SERVER] Could not find tickets file')
+            raise
+##
+#   @brief: Realiza a adição da instância ao arquivo de tickets
+#
+#   @return: True se a operação foi concluida. Caso contrário False
+#   @raises: FileNotFound caso o arquivo não seja encontrado 
+#            JSONDecodeError caso ocorra erros na leitura do arquivo
+##        
     def save(self):
         data = {'timestamp': self.timestamp.strftime('%d/%m/%Y %H:%M:%S'), 'routes': self.routes}
         try:
             with Ticket.tickets_file_lock:
                 with open(FilePathsManagement.TICKETS_FILE_PATH.value, 'r+') as file:
-                    all_tickets = json.load(file)
+                    all_tickets:dict[str,list] = json.load(file)
                     if self.email in all_tickets:
-                        all_tickets.get(self.email).append(data)
+                        all_tickets[self.email].append(data)
                     else:
                         all_tickets[self.email] = [data]
                     file.seek(0)
@@ -108,15 +133,30 @@ class Ticket:
             return False
         except json.JSONDecodeError:
             print(f'[SERVER] Error saving ticket! Tickets json file empty or invalid')
+            return False
+        except KeyError:
+            print(f'[SERVER] Client not fount')
+            return False
 
+##
+#   @brief: Realiza atualização dos atributos da instância por meio dos valores passados no dict
+#
+#   @param: dict contendos novos valores dos atributos
+##
     def from_json(self, values):
 
         self.email = values['email']
         self.timestamp = datetime.datetime.strptime(values['timestamp'], '%d/%m/%Y %H:%M:%S')
         self.routes = values['routes']
 
+##
+#   @brief: Realiza a construção de um dict representativo da instância
+#
+#   @return: dict contendos os valores dos atributos da instância
+##
     def to_json(self):
         json_str = {'email': self.email, 'timestamp':self.timestamp.strftime('%d/%m/%Y %H:%M:%S'), 'routes':self.routes}
 
         return json_str
+
 

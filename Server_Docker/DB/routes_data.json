@@ -1,1 +1,8 @@
-{"(0, 1)": {"match": "A", "destination": "B", "sits": 10, "id": "001"}, "(0, 2)": {"match": "A", "destination": "C", "sits": 6, "id": "002"}, "(1, 0)": {"match": "B", "destination": "A", "sits": 10, "id": "003"}, "(2, 1)": {"match": "C", "destination": "B", "sits": 8, "id": "004"}, "(2, 3)": {"match": "C", "destination": "D", "sits": 10, "id": "005"}, "(3, 2)": {"match": "D", "destination": "C", "sits": 10, "id": "006"}}
+{
+    "(0, 1)": "Route('A', 'B',6, '001')",
+    "(0, 2)": "Route('A', 'C',6, '002')",
+    "(1, 0)": "Route('B', 'A',9, '003')",
+    "(2, 1)": "Route('C', 'B',0, '004')",
+    "(2, 3)": "Route('C', 'D',10, '005')",
+    "(3, 2)": "Route('D', 'C',10, '006')"
+}
