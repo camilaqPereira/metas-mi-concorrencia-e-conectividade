@@ -316,6 +316,7 @@ class UsersData:
             return users
         
         except FileNotFoundError:
+            print(f'[SERVER] Could not find users file')
             raise
     
 ##
@@ -343,4 +344,4 @@ class UsersData:
         except ValueError:
             print(f'[SERVER] User email already exists.')
             return False
-
+        
