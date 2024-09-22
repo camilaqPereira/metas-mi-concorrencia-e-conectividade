@@ -36,26 +36,30 @@ class ConstantsManagement(Enum):
     DEFAULT_PORT = 8000
     HOST = socket.gethostbyname(socket.gethostname())
 
-
+##@brief: classe responsavel por reunir as informações de requisições alem de dispor de metodos para tradução em json ou tradução de um json
 class Request:
     def __init__(self, rq_type: str = '', rq_data = None, client_token:str = ''):
         self.rq_type = rq_type
         self.rq_data = rq_data
         self.client_token = client_token
 
+    ##@brief: metodo responsavel por converter os dados de um request em uma string json
+    # @return: str, um json com as chaves sendo os campos e os valores os dados do request
     def to_json(self):
         values = {"type":self.rq_type, "data":self.rq_data, "token":self.client_token}
         json_str = json.dumps(values)
 
         return json_str
 
+    ##@brief: metodo responsavel por converter os dados de um json em um request
+    # @param: json_str - str, string  json a ser convertida em um request
     def from_json(self, json_str: str):
         values = json.loads(json_str)
         self.rq_type = values['type']
         self.rq_data = values['data']
         self.client_token = values['token']
 
-
+##@brief: classe responsavel por reunir as informações de uma resposta do servidor alem de dispor de metodos para tradução em json ou tradução de um json
 class Response:
     def __init__(self, status:int= 0, data = None, rs_type:str= ''):
         self.timestamp = datetime.datetime.now()
@@ -63,6 +67,8 @@ class Response:
         self.data = data
         self.rs_type = rs_type
 
+    ##@brief: metodo responsavel por converter os dados de uma response em uma string json
+    # @return: str, um json com as chaves sendo os campos e os valores os dados da response
     def to_json(self):
         response = {'type':self.rs_type, 'timestamp':self.timestamp.strftime('%d/%m/%Y %H:%M:%S'), 'status':self.status, 'data':self.data}
 
@@ -70,6 +76,8 @@ class Response:
 
         return json_str
 
+    ##@brief: metodo responsavel por converter os dados de um json em uma response
+    # @param: json_str - str, string  json a ser convertida em response
     def from_json(self, json_str: str):
         response = json.loads(json_str)
 
