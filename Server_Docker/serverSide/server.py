@@ -4,6 +4,12 @@ from server.requests import ConstantsManagement as cm
 from DB.utils import ServerData
 from concurrent.futures import ThreadPoolExecutor
 
+
+##
+#   @brief Função worker excecutada pelas threads da poolthread. Realiza o processamento da requisição do usuário
+#   @param client - objeto do tipo ClientHandler. Usado para identidficar o cliente e processar a requisição
+#   @param server_data - objeto do tipo ServerData que armazena as informações do servidor
+##
 def process_client(client:ClientHandler, server_data: ServerData):   
 
     try:
@@ -11,9 +17,11 @@ def process_client(client:ClientHandler, server_data: ServerData):
         response:Response = Response()
         type = cm(request.rq_type).name
 
+        # Autenticação do token
         if type != "CREATE_USER" and type != "GETTOKEN":
             client.auth_token(request.client_token)
         
+        #Seleção do tratamento adequadoda requisição
         match type:
             case "CREATE_USER":
                 response.data = client.create_user(request.rq_data) # type: ignore
@@ -58,21 +66,21 @@ def process_client(client:ClientHandler, server_data: ServerData):
                     response.status = cm.NOT_FOUND
                     response.rs_type = cm.NO_DATA_TYPE
             
-            case _:
+            case _: #tipo de requisição inválido
                 raise ValueError(f"[SERVER] {client.addr} No request type named {request.rq_type}")
 
 
-    except socket.error:
+    except socket.error: #erro de conexão
         client.conn.close()
         Server.remove_client(client)
         return
     
-    except InvalidTokenException:
+    except InvalidTokenException: #autenticação do token falhou
         response.status = cm.INVALID_TOKEN
         response.data = None
         response.rs_type = cm.NO_DATA_TYPE
 
-    except (KeyError, ValueError):
+    except (KeyError, ValueError): #parâmetros inválidos
         response.status = cm.NOT_FOUND
         response.data = None
         response.rs_type = cm.NO_DATA_TYPE
@@ -80,6 +88,7 @@ def process_client(client:ClientHandler, server_data: ServerData):
     response.status = response.status.value
     response.rs_type = response.rs_type.value
     
+    #Envio da resposta
     client.send_pkt(response)
     client.conn.close()
     Server.remove_client(client)
@@ -110,6 +119,6 @@ def main(server_port):
 
 
 # Select port #
-port = 0 #int(input("Insert port value (0 for default): "))
+port = int(input("Insert port value (0 for default): "))
 port = port or ConstantsManagement.DEFAULT_PORT.value
 main(port)
