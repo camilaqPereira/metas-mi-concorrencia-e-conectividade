@@ -38,8 +38,8 @@ class Server:
             print(f"[SERVER] Server started at address {addr_socket[0]} and port {port}\n")
 
             status = True
-        except:
-            print("[SERVER] Failed to initialize socket!")
+        except socket.error as err:
+            print(f"[SERVER] Failed to initialize socket!{err}")
 
         return status
     
