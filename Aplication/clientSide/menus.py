@@ -6,7 +6,7 @@ from time import sleep
 # @param: clear_str - str, comando de limpar o terminal do SO 
 # @return: int, resposta do usuario decrementado de 1
 def ysno_menu(text: str, clear_str: str):
-    opc = -1
+    opc = 0
     color_list = ['\033[47;30m', '\033[49;0m']
     while True:
         os.system(clear_str)
@@ -31,7 +31,7 @@ def enumerate_menu(text_opc: list, text: str, clear_str: str):
 
 
     while True:
-        opc = -1
+        opc = 0
         os.system(clear_str)
         print(text)
         for item in text_opc:
