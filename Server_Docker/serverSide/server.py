@@ -5,10 +5,16 @@ from DB.utils import ServerData
 from threading import Thread, Lock
 
 def process_client(client:ClientHandler, server_data: ServerData, backlog_lock:Lock):   
-    failed = False
 
+    request:Request = client.receive_pkt()
+    if not request:
+        client.conn.close()
+        with backlog_lock:
+            Server.remove_client(client)
+        return
+
+    
     try:
-        request:Request = client.receive_pkt()
         response:Response = Response()
         type = cm(request.rq_type).name
 
@@ -62,14 +68,6 @@ def process_client(client:ClientHandler, server_data: ServerData, backlog_lock:L
             case _:
                 raise ValueError(f"[SERVER] {client.addr} No request type named {request.rq_type}")
 
-
-    except socket.error:
-        client.conn.close()
-        with backlog_lock:
-            Server.remove_client(client)
-        
-        return
-    
     except InvalidTokenException:
         response.status = cm.INVALID_TOKEN
         response.data = None
@@ -82,10 +80,14 @@ def process_client(client:ClientHandler, server_data: ServerData, backlog_lock:L
 
     response.status = response.status.value
     response.rs_type = response.rs_type.value
-    client.send_pkt(response)
+
+    if not client.send_pkt(response):
+        print(f"[SERVER] Package transfer to {client.addr} failed! \n")
+    
     client.conn.close()
     with backlog_lock:
         Server.remove_client(client)
+
 
 def main(server_port):
     #Inicialização dos dados do servidor
