@@ -14,7 +14,7 @@ def send_request(request: str, client:ClientSocket):
     if client.connect():
         size_transfer = str(len(request)).encode(requests.ConstantsManagement.FORMAT.value)
         size_transfer += b' ' * (requests.ConstantsManagement.MAX_PKT_SIZE.value - len(size_transfer))
-        client.client_socket.settimeout(5)
+
         try:
             client.client_socket.send(size_transfer)
             client.client_socket.send(request.encode(requests.ConstantsManagement.FORMAT.value))
