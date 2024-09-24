@@ -131,12 +131,27 @@ class ClientHandler:
             if pkt_size:
                 pkt_size = int(pkt_size)
                 #recebendo segundo pacote -> requisição
-                pkt.from_json(self.conn.recv(pkt_size).decode(ConstantsManagement.FORMAT.value))
-            return pkt
-        except socket.error as err:
+                msg = self.conn.recv(pkt_size).decode(ConstantsManagement.FORMAT.value)
+
+                if msg:
+                    pkt.from_json(msg)
+                    return pkt
+                else:
+                    print(f"[SERVER] Package reception from {self.addr} failed! {str(err)}\n")
+                    return None
+
+            else:
+                print(f"[SERVER] Connection test message or package reception from {self.addr} failed!\n")
+                return None
+            
+
+        except (RuntimeError, socket.error) as err:
             print(f"[SERVER] Package reception from {self.addr} failed! {str(err)}\n")
-            raise
-    
+            return None
+        
+        
+
+        
     ##
     #   @brief: Realiza o envio de pacotes do cliente
     #
@@ -147,12 +162,17 @@ class ClientHandler:
         try:
             pkt_len = str(len(pkt_json)).encode(ConstantsManagement.FORMAT.value)
             pkt_len += b' ' * (ConstantsManagement.MAX_PKT_SIZE.value - len(pkt_len))
-            self.conn.send(pkt_len)
-            self.conn.send(pkt_json.encode(ConstantsManagement.FORMAT.value))
-            status = True
+
+            if (self.conn.send(pkt_len) != 0) and (self.conn.send(pkt_json.encode(ConstantsManagement.FORMAT.value)) != 0):
+                return True
+            else: 
+                return False
+            
         except socket.error as err:
             print(f"[SERVER] Package transfer to {self.addr} failed! {str(err)}\n")
-            status = False
-        return status
+            return False
+ 
+        
+
     
     
