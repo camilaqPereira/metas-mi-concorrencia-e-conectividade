@@ -11,9 +11,13 @@ from concurrent.futures import ThreadPoolExecutor
 #   @param server_data - objeto do tipo ServerData que armazena as informações do servidor
 ##
 def process_client(client:ClientHandler, server_data: ServerData):   
-
+    request:Request = client.receive_pkt()
+    if not request:
+        client.conn.close()
+        Server.remove_client(client)
+        return
+    
     try:
-        request:Request = client.receive_pkt()
         response:Response = Response()
         type = cm(request.rq_type).name
 
@@ -69,11 +73,6 @@ def process_client(client:ClientHandler, server_data: ServerData):
             case _: #tipo de requisição inválido
                 raise ValueError(f"[SERVER] {client.addr} No request type named {request.rq_type}")
 
-
-    except socket.error: #erro de conexão
-        client.conn.close()
-        Server.remove_client(client)
-        return
     
     except InvalidTokenException: #autenticação do token falhou
         response.status = cm.INVALID_TOKEN

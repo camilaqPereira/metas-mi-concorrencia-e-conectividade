@@ -144,7 +144,7 @@ class ClientHandler:
                     pkt.from_json(msg)
                     return pkt
                 else:
-                    print(f"[SERVER] Package reception from {self.addr} failed! {str(err)}\n")
+                    print(f"[SERVER] Package reception from {self.addr} failed!\n")
                     return None
 
             else:
@@ -152,7 +152,7 @@ class ClientHandler:
                 return None
             
 
-        except (RuntimeError, socket.error) as err:
+        except socket.error as err:
             print(f"[SERVER] Package reception from {self.addr} failed! {str(err)}\n")
             return None
         
