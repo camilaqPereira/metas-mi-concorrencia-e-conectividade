@@ -79,8 +79,8 @@ def process_client(client:ClientHandler, server_data: ServerData):
         response.data = None
         response.rs_type = cm.NO_DATA_TYPE
 
-    except (KeyError, ValueError): #parâmetros inválidos
-        response.status = cm.NOT_FOUND
+    except (KeyError, ValueError) as err: #parâmetros inválidos
+        response.status = cm.NOT_FOUND if err == KeyError else cm.OPERATION_FAILED
         response.data = None
         response.rs_type = cm.NO_DATA_TYPE
 
