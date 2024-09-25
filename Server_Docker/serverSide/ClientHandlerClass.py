@@ -3,11 +3,16 @@ from DB.utils import *
 from server.requests import *
 import socket
 from serverSide.customExceptions import InvalidTokenException
+from concurrent.futures import ThreadPoolExecutor, wait
+
 
 ##
 #   @brief: Classe utilizada para gerenciar as requisições dos clientes
 ##
 class ClientHandler:
+
+    pool = ThreadPoolExecutor(max_workers=1)
+
 
     def __init__(self, conn, addr):  
         self.conn = conn
@@ -71,7 +76,9 @@ class ClientHandler:
     def buy_routes(self, server_data:ServerData, token:str, routes:list[tuple[str,str]]):
         try:
             email = self.__get_email(token)
-            if server_data.dec_all_routes(routes):
+            future = ClientHandler.pool.submit(server_data.dec_all_routes, routes)
+            wait([future])
+            if future.result():
                 ticket = Ticket(email, routes)
                 ticket.save()
                 return ticket.to_json()

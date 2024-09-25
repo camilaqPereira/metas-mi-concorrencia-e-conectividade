@@ -2,25 +2,26 @@ from serverSide.ClientHandlerClass import *
 from serverSide.ServerClass import *
 from server.requests import ConstantsManagement as cm
 from DB.utils import ServerData
-from threading import Thread, Lock
+from concurrent.futures import ThreadPoolExecutor
 
-def process_client(client:ClientHandler, server_data: ServerData, backlog_lock:Lock):   
 
-    request:Request = client.receive_pkt()
-    if not request:
-        client.conn.close()
-        with backlog_lock:
-            Server.remove_client(client)
-        return
+##
+#   @brief Função worker excecutada pelas threads da poolthread. Realiza o processamento da requisição do usuário
+#   @param client - objeto do tipo ClientHandler. Usado para identidficar o cliente e processar a requisição
+#   @param server_data - objeto do tipo ServerData que armazena as informações do servidor
+##
+def process_client(client:ClientHandler, server_data: ServerData):   
 
-    
     try:
+        request:Request = client.receive_pkt()
         response:Response = Response()
         type = cm(request.rq_type).name
 
+        # Autenticação do token
         if type != "CREATE_USER" and type != "GETTOKEN":
             client.auth_token(request.client_token)
         
+        #Seleção do tratamento adequadoda requisição
         match type:
             case "CREATE_USER":
                 response.data = client.create_user(request.rq_data) # type: ignore
@@ -65,34 +66,38 @@ def process_client(client:ClientHandler, server_data: ServerData, backlog_lock:L
                     response.status = cm.NOT_FOUND
                     response.rs_type = cm.NO_DATA_TYPE
             
-            case _:
+            case _: #tipo de requisição inválido
                 raise ValueError(f"[SERVER] {client.addr} No request type named {request.rq_type}")
 
-    except InvalidTokenException:
+
+    except socket.error: #erro de conexão
+        client.conn.close()
+        Server.remove_client(client)
+        return
+    
+    except InvalidTokenException: #autenticação do token falhou
         response.status = cm.INVALID_TOKEN
         response.data = None
         response.rs_type = cm.NO_DATA_TYPE
 
-    except (KeyError, ValueError):
+    except (KeyError, ValueError): #parâmetros inválidos
         response.status = cm.NOT_FOUND
         response.data = None
         response.rs_type = cm.NO_DATA_TYPE
 
     response.status = response.status.value
     response.rs_type = response.rs_type.value
-
-    client.send_pkt(response)
     
+    #Envio da resposta
+    client.send_pkt(response)
     client.conn.close()
-    with backlog_lock:
-        Server.remove_client(client)
-
+    Server.remove_client(client)
+    
+    return
 
 def main(server_port):
     #Inicialização dos dados do servidor
     server_data = ServerData()
-    #Inicialização do mutex -> backlog de usuários 
-    backlog_lock = Lock()
     #Inicialização do socket
     server = Server()
 
@@ -100,21 +105,20 @@ def main(server_port):
         exit(-1)
 
     #Gerenciando conexões
-    while True:
-        try:
-            (conn, client) = server.server_socket.accept()
-            new_client = ClientHandler(conn, client)
-            with backlog_lock:
+    with ThreadPoolExecutor(max_workers=10) as exec:
+        while True:
+            try:
+                (conn, client) = server.server_socket.accept()
+                new_client = ClientHandler(conn, client)
                 Server.add_client(new_client)
-            thread = Thread(target=process_client, args=(new_client,server_data, backlog_lock))
-            thread.start()
-        except socket.error as er:
-            print(f"[SERVER] Error accepting new connection. Error: {er} Retrying...\n")
-
+                exec.submit(process_client, new_client,server_data)
+            except socket.error as er:
+                print(f"[SERVER] Error accepting new connection. Error: {er} Retrying...\n")
+            except KeyboardInterrupt:
+                exit(-1)
 
 
 # Select port #
-port = 9000 #int(input("Insert port value (0 for default): "))
+port = int(input("Insert port value (0 for default): "))
 port = port or ConstantsManagement.DEFAULT_PORT.value
 main(port)
-
