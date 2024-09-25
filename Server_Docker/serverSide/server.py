@@ -81,8 +81,7 @@ def process_client(client:ClientHandler, server_data: ServerData, backlog_lock:L
     response.status = response.status.value
     response.rs_type = response.rs_type.value
 
-    if not client.send_pkt(response):
-        print(f"[SERVER] Package transfer to {client.addr} failed! \n")
+    client.send_pkt(response)
     
     client.conn.close()
     with backlog_lock:
@@ -115,6 +114,7 @@ def main(server_port):
 
 
 # Select port #
-port = 0 #int(input("Insert port value (0 for default): "))
+port = 9000 #int(input("Insert port value (0 for default): "))
 port = port or ConstantsManagement.DEFAULT_PORT.value
 main(port)
+

@@ -166,11 +166,13 @@ class ClientHandler:
             if (self.conn.send(pkt_len) != 0) and (self.conn.send(pkt_json.encode(ConstantsManagement.FORMAT.value)) != 0):
                 return True
             else: 
+                print(f"[SERVER] Package transfer to {self.addr} failed! \n")
                 return False
             
         except socket.error as err:
             print(f"[SERVER] Package transfer to {self.addr} failed! {str(err)}\n")
             return False
+        
  
         
 
