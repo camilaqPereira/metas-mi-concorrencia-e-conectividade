@@ -125,6 +125,8 @@ Quadro 1 e Quadro 2 detalham os valores pré-definidos que os campos das requisi
 
 **Quadro 2:** Valores pré-definidos para os campos das mensagens de resposta
 
+As mensagens JSON foram codificadas em UTF-8 para a transferência para atender aos requisitos da linguagem de programação utilizada.
+
 ## Conexões simultaneas e concorrência
 
 A fim de viabilizar a solicitação de requisições de forma simultânea, implementou-se um executor de threads (ThreadPoolExecutor) com dez threads. Esta técnica permite a execução concorrente das múltiplas requisições recebidas pelo servidor, garantindo uma resposta rápida e eficiente ao cliente, mesmo em períodos de alta demanda. 
