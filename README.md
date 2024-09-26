@@ -125,7 +125,7 @@ Quadro 1 e Quadro 2 detalham os valores pré-definidos que os campos das requisi
 
 **Quadro 2:** Valores pré-definidos para os campos das mensagens de resposta
 
-As mensagens JSON foram codificadas em UTF-8 para a transferência para atender aos requisitos da linguagem de programação utilizada.
+As mensagens JSON transmitidas foram codificadas em UTF-8 para atender aos requisitos da linguagem de programação utilizada (Python).
 
 ## Conexões simultaneas e concorrência
 
