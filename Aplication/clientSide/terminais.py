@@ -2,10 +2,11 @@ from Client import controller
 from Client import ClientSockClass
 from Client import requests
 
+#inserir aqui o ip do servidor
 ip = ''
 email = ''
-match = ''
-destination = ''
+match = 'A'
+destination = 'C'
 
 client = ClientSockClass.ClientSocket(ip)
 (status, dados) = controller.connect(email, client)
