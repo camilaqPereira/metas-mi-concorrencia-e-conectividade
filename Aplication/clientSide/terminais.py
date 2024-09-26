@@ -4,7 +4,7 @@ from Client import requests
 
 #inserir aqui o ip do servidor
 ip = ''
-email = ''
+email = 'panda'
 match = 'A'
 destination = 'C'
 
