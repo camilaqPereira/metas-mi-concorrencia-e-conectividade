@@ -32,7 +32,6 @@ def buy_route(client: ClientSocket):
     color_list = ['\033[47;30m', '\033[49;0m']
 
     if  status == requests.ConstantsManagement.OK.value:
-        number_routes = len(data)
 
         i = 0
 
